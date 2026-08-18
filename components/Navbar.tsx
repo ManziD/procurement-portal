@@ -80,7 +80,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 text-xl font-bold">
             <Briefcase className="h-6 w-6" />
-            <span>Procure<span className="text-accent-orange">UG</span></span>
+            <span>ServiceHub<span className="text-accent-orange">-Ug</span></span>
           </Link>
 
           {/* Search Bar - Desktop */}
