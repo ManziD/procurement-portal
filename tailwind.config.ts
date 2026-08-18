@@ -29,6 +29,10 @@ const config: Config = {
           light: "#2684FF",
           foreground: "#FFFFFF",
         },
+                "primary-blue": "#0052CC",
+        "secondary-blue": "#0041A3",
+        "accent-orange": "#FF6B00",
+        
         secondary: {
           DEFAULT: "#0041A3",
           foreground: "#FFFFFF",
