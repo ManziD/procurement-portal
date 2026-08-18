@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-2 text-xl font-bold text-white mb-4">
               <Briefcase className="h-6 w-6 text-accent-orange" />
-              <span>Procure<span className="text-accent-orange">UG</span></span>
+              <span>ServiceHub<span className="text-accent-orange">-Ug</span></span>
             </div>
             <p className="text-sm">
               Connecting businesses with verified service providers in Kampala, Uganda.
@@ -62,18 +62,18 @@ export default function Footer() {
               </li>
               <li className="flex items-center">
                 <Phone className="h-4 w-4 mr-2 text-accent-orange" />
-                <span>+256 700 000 000</span>
+                <span>+256 750349712</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-4 w-4 mr-2 text-accent-orange" />
-                <span>info@procureug.com</span>
+                <span>info@ServiceHub-Ug.com</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} ProcureUG. All rights reserved. Built for Kampala, Uganda.</p>
+          <p>&copy; {new Date().getFullYear()} ServiceHub-Ug. All rights reserved. Kampala, Uganda.</p>
         </div>
       </div>
     </footer>
