@@ -104,7 +104,7 @@ export default function RegisterPage() {
             Create Account
           </CardTitle>
           <CardDescription className="text-center">
-            Join ProcureUG to start connecting
+            Join ServiceHub-Ug to start connecting
           </CardDescription>
         </CardHeader>
         <CardContent>
