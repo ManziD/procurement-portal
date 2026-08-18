@@ -79,7 +79,7 @@ export default function LoginPage() {
             Welcome Back
           </CardTitle>
           <CardDescription className="text-center">
-            Sign in to your ProcureUG account
+            Sign in to your ServiceHub-UG account
           </CardDescription>
         </CardHeader>
         <CardContent>
