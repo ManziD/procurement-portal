@@ -1,4 +1,3 @@
-
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -7,11 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CalendarIcon, MapPin, User, Eye } from 'lucide-react'
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { id: string }
-}) {
+export async function generateMetadata({ params }: { params: { id: string } }) {
   const { id } = params
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
@@ -26,20 +21,14 @@ export async function generateMetadata({
     return { title: 'Service Request Not Found | ServiceHub-Ug' }
   }
 
-  // Fix: cast category to avoid type error
   const categoryName = (rfs.category as any)?.name || 'Service'
-
   return {
     title: `${rfs.title} - ${categoryName} in ${rfs.division}, Kampala | ServiceHub-Ug`,
     description: `View this request for "${rfs.title}" in ${rfs.division}. ${rfs.description?.slice(0, 150) || ''}`,
   }
 }
 
-export default async function RFSDetailPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+export default async function RFSDetailPage({ params }: { params: { id: string } }) {
   const { id } = params
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
@@ -52,7 +41,7 @@ export default async function RFSDetailPage({
 
   if (error || !rfs) notFound()
 
-  // Increment view count (fire-and-forget)
+  // Increment view count
   try {
     await supabase
       .from('requests_for_service')
@@ -60,11 +49,12 @@ export default async function RFSDetailPage({
       .eq('id', id)
   } catch {}
 
-  // Fix: cast category and client
   const categoryName = (rfs.category as any)?.name || 'Uncategorized'
   const clientName = (rfs.client as any)?.full_name || 'Anonymous Client'
+  const baseUrl = 'https://ServiceHub-Ug.com'
 
-  const structuredData = {
+  // --- JSON‑LD: Service schema ---
+  const serviceStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: rfs.title,
@@ -87,9 +77,22 @@ export default async function RFSDetailPage({
       priceCurrency: 'UGX',
       availability: rfs.status === 'OPEN' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
     },
-    url: `https://servicehub-ug.com/rfs/${id}`,
+    url: `${baseUrl}/rfs/${id}`,
   }
 
+  // --- JSON‑LD: BreadcrumbList ---
+  const breadcrumbStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: 'Browse', item: `${baseUrl}/browse` },
+      { '@type': 'ListItem', position: 3, name: categoryName, item: `${baseUrl}/browse?category=${encodeURIComponent(categoryName)}` },
+      { '@type': 'ListItem', position: 4, name: rfs.title, item: `${baseUrl}/rfs/${rfs.id}` },
+    ],
+  }
+
+  // Helper: format currency
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', minimumFractionDigits: 0 }).format(amount)
 
@@ -106,7 +109,16 @@ export default async function RFSDetailPage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      {/* JSON‑LD scripts */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceStructuredData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbStructuredData) }}
+      />
+
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-4">
           <Badge className={`${getStatusBadge(rfs.status)} text-white mb-2`}>{rfs.status}</Badge>
