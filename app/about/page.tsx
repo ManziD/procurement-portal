@@ -56,11 +56,7 @@ export default function AboutPage() {
                 "name": "Manzi Delick"
               }
             ],
-            "foundingDate": "2024",
-            "sameAs": [
-              "https://facebook.com/servicehubug",
-              "https://twitter.com/servicehubug"
-            ]
+            "foundingDate": "2024"
           })
         }}
       />
