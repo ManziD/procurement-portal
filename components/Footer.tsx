@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-2 text-xl font-bold text-white mb-4">
               <Briefcase className="h-6 w-6 text-accent-orange" />
-              <span>ServiceHub<span className="text-accent-orange">-Ug</span></span>
+              <span>Service<span className="text-accent-orange">Hub</span></span>
             </div>
             <p className="text-sm">
               Connecting businesses with verified service providers in Kampala, Uganda.
@@ -38,7 +38,7 @@ export default function Footer() {
               <li><Link href="/browse" className="hover:text-accent-orange transition-colors">Browse Services</Link></li>
               <li><Link href="/register" className="hover:text-accent-orange transition-colors">Register</Link></li>
               <li><Link href="/login" className="hover:text-accent-orange transition-colors">Login</Link></li>
-              <li><Link href="#" className="hover:text-accent-orange transition-colors">About Us</Link></li>
+              <li><Link href="/about" className="hover:text-accent-orange transition-colors">About Us</Link></li>
             </ul>
           </div>
 
@@ -47,7 +47,7 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-4">For Clients</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/client/post-rfs" className="hover:text-accent-orange transition-colors">Post a Request</Link></li>
-              <li><Link href="/client/dashboard" className="hover:text-accent-orange transition-colors">My Requests</Link></li>
+              <li><Link href="/client/my-rfs" className="hover:text-accent-orange transition-colors">My Requests</Link></li>
               <li><Link href="/browse" className="hover:text-accent-orange transition-colors">Find Providers</Link></li>
             </ul>
           </div>
@@ -62,18 +62,18 @@ export default function Footer() {
               </li>
               <li className="flex items-center">
                 <Phone className="h-4 w-4 mr-2 text-accent-orange" />
-                <span>+256 750349712</span>
+                <span>+256 750 349 712</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-4 w-4 mr-2 text-accent-orange" />
-                <span>info@ServiceHub-Ug.com</span>
+                <span>info@servicehub-ug.com</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} ServiceHub-Ug. All rights reserved. Kampala, Uganda.</p>
+          <p>&copy; {new Date().getFullYear()} ServiceHub-Ug. All rights reserved. Built for Kampala, Uganda.</p>
         </div>
       </div>
     </footer>
