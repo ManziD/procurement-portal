@@ -1,11 +1,9 @@
-import Link from 'next/link'
 import HeroBanner from '@/components/HeroBanner'
 import CategoryCard from '@/components/CategoryCard'
 import ServiceCard from '@/components/ServiceCard'
-import { supabase } from '@/lib/supabase/client'
 import { CATEGORIES } from '@/lib/constants'
 
-// Sample featured services - In production, fetch from database
+// Sample featured services – replace with real data later
 const featuredServices = [
   {
     id: '1',
@@ -27,57 +25,79 @@ const featuredServices = [
     provider_name: 'TechWise Solutions',
     image: 'https://images.unsplash.com/photo-1547658719-da2b51169166?w=400'
   },
-  {
-    id: '3',
-    title: 'Catering for Corporate Events',
-    category: 'Catering',
-    budget: 800000,
-    location: 'Makindye',
-    division: 'Makindye',
-    provider_name: 'Taste of Uganda',
-    image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=400'
-  },
 ]
 
-export default async function Home() {
+export default function Home() {
   return (
-    <div>
-      {/* Hero Banner - Jumia style */}
-      <HeroBanner />
+    <>
+      {/* Organization Schema – JSON‑LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "ServiceHub-Ug",
+            "description": "Connecting businesses with trusted service providers in Kampala, Uganda.",
+            "url": "https://ServiceHub-Ug.com",
+            "logo": "https://ServiceHub-Ug.com/logo.png",
+            "email": "info@servicehub-ug.com",
+            "telephone": "+256-750-349-712",
+            "contactPoint": [
+              {
+                "@type": "ContactPoint",
+                "telephone": "+256-750-349-712",
+                "contactType": "Customer Service"
+              },
+              {
+                "@type": "ContactPoint",
+                "telephone": "+256-740-339-768",
+                "contactType": "Sales"
+              }
+            ],
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Kampala",
+              "addressCountry": "UG"
+            }
+          })
+        }}
+      />
 
-      {/* Category Cards Section */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-primary-blue mb-6">
-          Browse Services by Category
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {CATEGORIES.map((category) => (
-            <CategoryCard key={category} category={category} />
-          ))}
-        </div>
-      </section>
+      <div>
+        <HeroBanner />
 
-      {/* Featured Services Section */}
-      <section className="bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-primary-blue">
-              Featured Services
-            </h2>
-            <Link
-              href="/browse"
-              className="text-accent-orange hover:underline font-medium"
-            >
-              View All →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {featuredServices.map((service) => (
-              <ServiceCard key={service.id} service={service} />
+        {/* Categories */}
+        <section className="container mx-auto px-4 py-12">
+          <h2 className="text-2xl font-bold text-primary-blue mb-6">
+            Browse Services by Category
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {CATEGORIES.map((category) => (
+              <CategoryCard key={category} category={category} />
             ))}
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+
+        {/* Featured Services */}
+        <section className="bg-gray-50 py-12">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-primary-blue">
+                Featured Services
+              </h2>
+              <a href="/browse" className="text-accent-orange hover:underline font-medium">
+                View All →
+              </a>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {featuredServices.map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
   )
 }
