@@ -24,7 +24,7 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      // 1. Sign up user
+      // 1. Sign up user – no redirectTo needed
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -84,9 +84,7 @@ export default function RegisterPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+        // redirectTo removed – handled by Supabase's URL Configuration
       })
 
       if (error) throw error
