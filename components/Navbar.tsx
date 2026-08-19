@@ -13,9 +13,10 @@ import {
   LayoutDashboard,
   Briefcase,
   FileText,
-  MessageSquare,
-  Shield,
-  Home
+  Home,
+  Info,
+  LogIn,
+  UserPlus,
 } from 'lucide-react'
 import LocationDropdown from './LocationDropdown'
 import { Button } from './ui/button'
@@ -29,7 +30,6 @@ export default function Navbar() {
   const router = useRouter()
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
@@ -37,7 +37,6 @@ export default function Navbar() {
       }
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
@@ -73,6 +72,13 @@ export default function Navbar() {
     }
   }
 
+  // Define quicklinks for mobile menu
+  const quickLinks = [
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'Browse Services', href: '/browse', icon: Search },
+    { name: 'About Us', href: '/about', icon: Info },
+  ]
+
   return (
     <nav className="bg-primary-blue text-white sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4">
@@ -80,7 +86,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 text-xl font-bold">
             <Briefcase className="h-6 w-6" />
-            <span>ServiceHub<span className="text-accent-orange">-Ug</span></span>
+            <span>Service<span className="text-accent-orange">Hub</span></span>
           </Link>
 
           {/* Search Bar - Desktop */}
@@ -102,91 +108,22 @@ export default function Navbar() {
             </div>
           </form>
 
-          {/* Right Section */}
-          <div className="flex items-center space-x-4">
-            {/* Location - Desktop */}
-            <div className="hidden lg:block">
-              <LocationDropdown />
-            </div>
-
-            {/* User Menu */}
+          {/* Desktop Right Section */}
+          <div className="hidden md:flex items-center space-x-4">
+            <LocationDropdown />
             {user ? (
-              <div className="relative">
+              <div className="flex items-center space-x-2">
+                <Link href={getDashboardLink()}>
+                  <Button variant="secondary" className="bg-white text-primary-blue hover:bg-gray-100">
+                    Dashboard
+                  </Button>
+                </Link>
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center space-x-2 hover:bg-primary-dark px-3 py-2 rounded-lg transition-colors"
+                  onClick={handleLogout}
+                  className="text-sm hover:text-accent-orange transition-colors"
                 >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url} />
-                    <AvatarFallback className="bg-accent-orange text-white">
-                      {profile?.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden md:inline text-sm">
-                    {profile?.full_name || user.email?.split('@')[0]}
-                  </span>
+                  Logout
                 </button>
-
-                {/* Dropdown Menu */}
-                {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl py-2 text-gray-800">
-                    <div className="px-4 py-2 border-b">
-                      <p className="font-medium">{profile?.full_name || 'User'}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                      <p className="text-xs text-primary-blue font-medium mt-1">
-                        {profile?.role?.replace('_', ' ')}
-                      </p>
-                    </div>
-
-                    <Link
-                      href={getDashboardLink()}
-                      className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <LayoutDashboard className="h-4 w-4 mr-3" />
-                      Dashboard
-                    </Link>
-
-                    {profile?.role === 'CLIENT' && (
-                      <Link
-                        href="/client/post-rfs"
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <FileText className="h-4 w-4 mr-3" />
-                        Post Request
-                      </Link>
-                    )}
-
-                    {profile?.role === 'SERVICE_PROVIDER' && (
-                      <Link
-                        href="/provider/profile"
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <User className="h-4 w-4 mr-3" />
-                        Business Profile
-                      </Link>
-                    )}
-
-                    <Link
-                      href="/browse"
-                      className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Search className="h-4 w-4 mr-3" />
-                      Browse Services
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-gray-100 transition-colors"
-                    >
-                      <LogOut className="h-4 w-4 mr-3" />
-                      Logout
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="flex items-center space-x-2">
@@ -195,22 +132,22 @@ export default function Navbar() {
                     Login
                   </Button>
                 </Link>
-                <Link href="/register" className="hidden sm:inline">
+                <Link href="/register">
                   <Button className="bg-accent-orange hover:bg-opacity-90 text-white">
                     Sign Up
                   </Button>
                 </Link>
               </div>
             )}
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 hover:bg-primary-dark rounded-lg"
-            >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 hover:bg-primary-dark rounded-lg"
+          >
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
 
         {/* Mobile Search */}
@@ -232,6 +169,76 @@ export default function Navbar() {
           </div>
         </form>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-primary-dark border-t border-primary-light/20">
+          <div className="container mx-auto px-4 py-4 space-y-3">
+            {/* Quick links */}
+            {quickLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <link.icon className="h-5 w-5" />
+                <span>{link.name}</span>
+              </Link>
+            ))}
+
+            {/* User-specific links */}
+            {user ? (
+              <>
+                <Link
+                  href={getDashboardLink()}
+                  className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                  <span>Dashboard</span>
+                </Link>
+                {profile?.role === 'CLIENT' && (
+                  <Link
+                    href="/client/post-rfs"
+                    className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FileText className="h-5 w-5" />
+                    <span>Post Request</span>
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-3 text-red-400 hover:text-red-300 transition-colors py-2 w-full text-left"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <LogIn className="h-5 w-5" />
+                  <span>Login</span>
+                </Link>
+                <Link
+                  href="/register"
+                  className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <UserPlus className="h-5 w-5" />
+                  <span>Sign Up</span>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }
