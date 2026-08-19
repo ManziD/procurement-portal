@@ -187,7 +187,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-semibold text-primary-blue mt-8">Who We Are</h2>
 
           <p>
-            ServiceHub-Ug was founded by <strong>Atukumiire Locus Katureebe and Manzi Delick</strong>, with a shared goal of creating a practical digital solution to the challenge of finding reliable services.
+            ServiceHub-Ug was founded by <strong>Atukumiire Locus Katureebe</strong> and <strong>Manzi Delick</strong>, with a shared goal of creating a practical digital solution to the challenge of finding reliable services.
           </p>
 
           <p>
