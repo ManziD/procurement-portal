@@ -112,22 +112,28 @@ export default async function BrowsePage({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {services.map((service) => (
-            <ServiceCard
-              key={service.id}
-              service={{
-                id: service.id,
-                title: service.title,
-                category: service.category?.name || 'Uncategorized',
-                budget: service.budget,
-                location: service.location,
-                division: service.division,
-                provider_name: service.client?.full_name || undefined,
-                image: service.images?.[0] || undefined,
-                deadline: service.deadline,
-              }}
-            />
-          ))}
+          {services.map((service) => {
+            // TypeScript fix: cast category and client as needed
+            const categoryName = (service.category as any)?.name || 'Uncategorized'
+            const clientName = (service.client as any)?.full_name || undefined
+
+            return (
+              <ServiceCard
+                key={service.id}
+                service={{
+                  id: service.id,
+                  title: service.title,
+                  category: categoryName,
+                  budget: service.budget,
+                  location: service.location,
+                  division: service.division,
+                  provider_name: clientName,
+                  image: service.images?.[0] || undefined,
+                  deadline: service.deadline,
+                }}
+              />
+            )
+          })}
         </div>
       )}
     </div>
