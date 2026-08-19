@@ -1,3 +1,4 @@
+
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -25,8 +26,11 @@ export async function generateMetadata({
     return { title: 'Service Request Not Found | ServiceHub-Ug' }
   }
 
+  // Fix: cast category to avoid type error
+  const categoryName = (rfs.category as any)?.name || 'Service'
+
   return {
-    title: `${rfs.title} - ${rfs.category?.name || 'Service'} in ${rfs.division}, Kampala | ServiceHub-Ug`,
+    title: `${rfs.title} - ${categoryName} in ${rfs.division}, Kampala | ServiceHub-Ug`,
     description: `View this request for "${rfs.title}" in ${rfs.division}. ${rfs.description?.slice(0, 150) || ''}`,
   }
 }
@@ -56,20 +60,24 @@ export default async function RFSDetailPage({
       .eq('id', id)
   } catch {}
 
+  // Fix: cast category and client
+  const categoryName = (rfs.category as any)?.name || 'Uncategorized'
+  const clientName = (rfs.client as any)?.full_name || 'Anonymous Client'
+
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: rfs.title,
     description: rfs.description,
-    provider: { '@type': 'Organization', name: rfs.client?.full_name || 'Anonymous Client' },
-    category: rfs.category?.name || 'Service',
+    provider: { '@type': 'Organization', name: clientName },
+    category: categoryName,
     location: {
       '@type': 'Place',
       address: {
         '@type': 'PostalAddress',
         addressLocality: rfs.parish,
         addressRegion: rfs.division,
-        addressCountry: 'UG', // fixed duplicate
+        addressCountry: 'UG',
         name: `${rfs.parish}, ${rfs.division}, Kampala, Uganda`,
       },
     },
@@ -107,7 +115,7 @@ export default async function RFSDetailPage({
             <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary-blue" />{rfs.location}</span>
             <span className="flex items-center"><CalendarIcon className="h-4 w-4 mr-1 text-primary-blue" />Deadline: {new Date(rfs.deadline).toLocaleDateString()}</span>
             <span className="flex items-center"><Eye className="h-4 w-4 mr-1 text-primary-blue" />{rfs.views || 0} views</span>
-            <span className="flex items-center"><User className="h-4 w-4 mr-1 text-primary-blue" />Posted by {rfs.client?.full_name || 'Anonymous'}</span>
+            <span className="flex items-center"><User className="h-4 w-4 mr-1 text-primary-blue" />Posted by {clientName}</span>
           </div>
         </div>
 
@@ -117,7 +125,7 @@ export default async function RFSDetailPage({
             <div><h3 className="font-semibold text-gray-700">Description</h3><p className="text-gray-800 whitespace-pre-wrap">{rfs.description}</p></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><h4 className="text-sm font-medium text-gray-500">Budget</h4><p className="text-2xl font-bold text-accent-orange">{formatCurrency(rfs.budget)}</p></div>
-              <div><h4 className="text-sm font-medium text-gray-500">Category</h4><p className="text-gray-800">{rfs.category?.name || 'Uncategorized'}</p></div>
+              <div><h4 className="text-sm font-medium text-gray-500">Category</h4><p className="text-gray-800">{categoryName}</p></div>
               <div><h4 className="text-sm font-medium text-gray-500">Division</h4><p className="text-gray-800">{rfs.division}</p></div>
               <div><h4 className="text-sm font-medium text-gray-500">Parish</h4><p className="text-gray-800">{rfs.parish}</p></div>
             </div>
