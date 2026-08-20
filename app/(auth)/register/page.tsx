@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Lock, User, Chrome, Briefcase, UserCheck } from 'lucide-react'
+import { Mail, Lock, User, Briefcase, UserCheck } from 'lucide-react'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -24,7 +24,7 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      // 1. Sign up user – no redirectTo needed
+      // 1. Sign up user – no redirectTo
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -57,7 +57,7 @@ export default function RegisterPage() {
             .from('service_providers')
             .insert({
               id: authData.user.id,
-              business_name: fullName, // placeholder, they can update later
+              business_name: fullName,
             })
 
           if (providerError) throw providerError
@@ -77,22 +77,8 @@ export default function RegisterPage() {
     }
   }
 
-  const handleGoogleRegister = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        // redirectTo removed – handled by Supabase's URL Configuration
-      })
-
-      if (error) throw error
-    } catch (error: any) {
-      setError(error.message)
-      setLoading(false)
-    }
-  }
+  // Google OAuth temporarily disabled to avoid redirect errors
+  // const handleGoogleRegister = async () => { ... }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -190,25 +176,7 @@ export default function RegisterPage() {
               {loading ? 'Creating account...' : 'Create Account'}
             </Button>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleGoogleRegister}
-              disabled={loading}
-            >
-              <Chrome className="mr-2 h-4 w-4" />
-              Google
-            </Button>
+            {/* Google button removed temporarily */}
 
             <div className="text-center text-sm">
               <span className="text-gray-600">Already have an account? </span>
