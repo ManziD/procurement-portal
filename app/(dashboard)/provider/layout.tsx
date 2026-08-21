@@ -26,23 +26,16 @@ export default async function ProviderLayout({
   const cookieStore = cookies()
   const supabaseServer = createClient(cookieStore)
 
-  // Get provider profile
+  // 🔥 FIX: Include is_premium and premium_expires_at
   const { data: provider } = await supabaseServer
     .from('service_providers')
-    .select('business_name, phone, services_offered, serves_locations')
+    .select('business_name, phone, services_offered, serves_locations, is_premium, premium_expires_at')
     .eq('id', user.id)
     .single()
 
   // If provider hasn't set up their profile, redirect to setup
-  const needsSetup = !provider?.business_name || !provider?.phone || 
-                     !provider?.services_offered?.length || !provider?.serves_locations?.length
-
-  // Check if current path is the setup page to avoid infinite redirect
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
-  const isSetupPage = currentPath?.includes('/provider/setup')
-
-  // For server-side, we can't check window, so we'll use a flag in the layout
-  // Instead, let's handle this in the page itself
+  // (This check is done on the dashboard page, not here, to avoid infinite loop)
+  // We'll just show the layout, and dashboard will handle redirect.
 
   const navLinks = [
     { href: '/provider/dashboard', label: 'Dashboard', icon: LayoutDashboard },
