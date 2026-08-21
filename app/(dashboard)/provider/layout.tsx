@@ -1,5 +1,7 @@
-import { getCurrentUser, getCurrentProfile } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/supabase/client'
 import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { 
   LayoutDashboard, 
@@ -8,8 +10,8 @@ import {
   CreditCard, 
   User, 
   LogOut,
-  Bell,
-  Briefcase
+  Briefcase,
+  Inbox
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 
@@ -21,21 +23,30 @@ export default async function ProviderLayout({
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
-  const profile = await getCurrentProfile()
-  if (!profile || profile.role !== 'SERVICE_PROVIDER') {
-    redirect('/')
-  }
+  const cookieStore = cookies()
+  const supabaseServer = createClient(cookieStore)
 
   // Get provider profile
-  const { data: provider } = await supabase
+  const { data: provider } = await supabaseServer
     .from('service_providers')
-    .select('*')
+    .select('business_name, phone, services_offered, serves_locations')
     .eq('id', user.id)
     .single()
 
+  // If provider hasn't set up their profile, redirect to setup
+  const needsSetup = !provider?.business_name || !provider?.phone || 
+                     !provider?.services_offered?.length || !provider?.serves_locations?.length
+
+  // Check if current path is the setup page to avoid infinite redirect
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+  const isSetupPage = currentPath?.includes('/provider/setup')
+
+  // For server-side, we can't check window, so we'll use a flag in the layout
+  // Instead, let's handle this in the page itself
+
   const navLinks = [
     { href: '/provider/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/provider/invitations', label: 'Invitations', icon: Mail },
+    { href: '/provider/invitations', label: 'Inbox', icon: Inbox },
     { href: '/provider/bids', label: 'My Bids', icon: FileText },
     { href: '/provider/subscription', label: 'Premium', icon: CreditCard },
     { href: '/provider/profile', label: 'Profile', icon: User },
