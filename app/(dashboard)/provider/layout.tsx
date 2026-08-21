@@ -39,7 +39,7 @@ export default async function ProviderLayout({
 
   const navLinks = [
     { href: '/provider/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/provider/invitations', label: 'Inbox', icon: Inbox },
+    { href: '/provider/inbox', label: 'Inbox', icon: Inbox },
     { href: '/provider/bids', label: 'My Bids', icon: FileText },
     { href: '/provider/subscription', label: 'Premium', icon: CreditCard },
     { href: '/provider/profile', label: 'Profile', icon: User },
