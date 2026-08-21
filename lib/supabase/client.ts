@@ -8,16 +8,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? localStorage : undefined,
   },
 })
 
-// Helper to get current user
 export const getCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   return user
 }
 
-// Helper to get current user profile
 export const getCurrentProfile = async () => {
   const user = await getCurrentUser()
   if (!user) return null
