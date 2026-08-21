@@ -22,15 +22,29 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      console.log('🔍 1. Attempting login...')
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: {
-          persistSession: true, // ← FIX: ensures session is saved to localStorage
+          persistSession: true,
         },
       })
 
       if (error) throw error
+
+      console.log('✅ 2. Login successful. User:', data.user?.email)
+      console.log('🔍 3. Session object:', data.session ? 'EXISTS ✅' : 'MISSING ❌')
+
+      // Check localStorage directly
+      const token = localStorage.getItem('supabase.auth.token')
+      console.log('🔍 4. localStorage token after login:', token ? 'FOUND ✅' : 'MISSING ❌')
+
+      // Check all keys
+      const allKeys = Object.keys(localStorage)
+      const supabaseKeys = allKeys.filter(k => k.includes('sb-') || k.includes('supabase'))
+      console.log('🔍 5. All localStorage keys containing "sb-" or "supabase":', supabaseKeys)
 
       // Redirect based on role
       const { data: profile } = await supabase
@@ -49,6 +63,7 @@ export default function LoginPage() {
         router.push('/')
       }
     } catch (error: any) {
+      console.error('❌ Login error:', error)
       setError(error.message)
     } finally {
       setLoading(false)
