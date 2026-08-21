@@ -62,15 +62,9 @@ export default function Navbar() {
     }
   }
 
-  // 🔥 FIX: Always fallback to /dashboard if profile is null or role unknown
+  // 🔥 ALWAYS use the new client-side dashboard page
   const getDashboardLink = () => {
-    if (!profile) return '/dashboard'
-    switch (profile.role) {
-      case 'ADMIN': return '/admin/dashboard'
-      case 'CLIENT': return '/client/dashboard'
-      case 'SERVICE_PROVIDER': return '/provider/dashboard'
-      default: return '/dashboard'
-    }
+    return '/dashboard-new'
   }
 
   // Define quicklinks for mobile menu
