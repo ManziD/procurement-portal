@@ -7,12 +7,13 @@ import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Lock, User, Briefcase, UserCheck } from 'lucide-react'
+import { Mail, Lock, User, Briefcase, UserCheck, Phone } from 'lucide-react'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
   const [role, setRole] = useState<'CLIENT' | 'SERVICE_PROVIDER'>('CLIENT')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +25,6 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      // 1. Sign up user – no redirectTo
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -32,38 +32,40 @@ export default function RegisterPage() {
           data: {
             full_name: fullName,
             role: role,
+            phone: phone,
           },
         },
       })
 
       if (authError) throw authError
 
-      // 2. Create profile record
       if (authData.user) {
+        // Insert into profiles
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: authData.user.id,
             email: email,
             full_name: fullName,
+            phone: phone,
             role: role,
           })
 
         if (profileError) throw profileError
 
-        // 3. If service provider, create service_provider record
+        // If service provider, create service_provider record
         if (role === 'SERVICE_PROVIDER') {
           const { error: providerError } = await supabase
             .from('service_providers')
             .insert({
               id: authData.user.id,
               business_name: fullName,
+              phone: phone,
             })
 
           if (providerError) throw providerError
         }
 
-        // Redirect based on role
         if (role === 'CLIENT') {
           router.push('/client/dashboard')
         } else {
@@ -76,9 +78,6 @@ export default function RegisterPage() {
       setLoading(false)
     }
   }
-
-  // Google OAuth temporarily disabled to avoid redirect errors
-  // const handleGoogleRegister = async () => { ... }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -113,6 +112,16 @@ export default function RegisterPage() {
                 required
                 className="w-full"
                 icon={<Mail className="h-4 w-4 text-gray-400" />}
+              />
+            </div>
+            <div>
+              <Input
+                type="phone"
+                placeholder="Phone number (e.g., 0750123456)"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full"
+                icon={<Phone className="h-4 w-4 text-gray-400" />}
               />
             </div>
             <div>
@@ -175,8 +184,6 @@ export default function RegisterPage() {
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </Button>
-
-            {/* Google button removed temporarily */}
 
             <div className="text-center text-sm">
               <span className="text-gray-600">Already have an account? </span>
