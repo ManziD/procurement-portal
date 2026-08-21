@@ -64,7 +64,7 @@ export default function Navbar() {
 
   // 🔥 ALWAYS use the new client-side dashboard page
   const getDashboardLink = () => {
-    return '/dashboard-new'
+    return '/portal'
   }
 
   // Define quicklinks for mobile menu
