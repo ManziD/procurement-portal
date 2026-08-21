@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    // 1. Get authenticated user
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
     const { data: { user } } = await supabase.auth.getUser()
@@ -16,11 +15,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // 2. Parse request body
     const body = await request.json()
     const { requestId, price, timeline, message } = body
 
-    // 3. Validate required fields
     if (!requestId) {
       return NextResponse.json(
         { error: 'Request ID is required' },
@@ -42,7 +39,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 4. Check if provider is invited to this request
+    // Check invitation
     const { data: invitation, error: inviteError } = await supabase
       .from('invitations')
       .select('id, status')
@@ -57,7 +54,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 5. Check if bid already exists (prevent duplicates)
+    // Check duplicate bid
     const { data: existingBid } = await supabase
       .from('bids')
       .select('id')
@@ -72,7 +69,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 6. Insert the bid
+    // Insert bid
     const { data: bid, error: bidError } = await supabase
       .from('bids')
       .insert({
@@ -94,18 +91,12 @@ export async function POST(request: Request) {
       )
     }
 
-    // 7. Update invitation status to BID_SUBMITTED
-    const { error: updateError } = await supabase
+    // Update invitation status
+    await supabase
       .from('invitations')
       .update({ status: 'BID_SUBMITTED' })
       .eq('id', invitation.id)
 
-    if (updateError) {
-      console.error('Invitation update error:', updateError)
-      // Non-critical – we can still return success
-    }
-
-    // 8. Return success response
     return NextResponse.json({
       success: true,
       bid: bid,
