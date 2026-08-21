@@ -4,70 +4,81 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
-export default function DashboardRedirect() {
+export default function DashboardPage() {
   const router = useRouter()
-  const [checking, setChecking] = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push('/login')
-        return
-      }
-
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-      if (!profile) {
-        // No profile – try to detect if it's a provider or client
-        const { data: provider } = await supabase
-          .from('service_providers')
-          .select('id')
-          .eq('id', session.user.id)
-          .single()
-        if (provider) {
-          router.push('/provider/dashboard')
+    const checkAndRedirect = async () => {
+      try {
+        // 1. Check if user is logged in (using client-side session)
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          router.push('/login')
           return
         }
-        const { data: client } = await supabase
-          .from('clients')
-          .select('id')
+
+        // 2. Get user profile to determine role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
           .eq('id', session.user.id)
           .single()
-        if (client) {
-          router.push('/client/dashboard')
-          return
-        }
-        router.push('/')
-        return
-      }
 
-      // Redirect based on role
-      switch (profile.role) {
-        case 'ADMIN':
+        // 3. Redirect based on role
+        if (profile?.role === 'ADMIN') {
           router.push('/admin/dashboard')
-          break
-        case 'CLIENT':
+        } else if (profile?.role === 'CLIENT') {
           router.push('/client/dashboard')
-          break
-        case 'SERVICE_PROVIDER':
+        } else if (profile?.role === 'SERVICE_PROVIDER') {
           router.push('/provider/dashboard')
-          break
-        default:
+        } else {
+          // If no profile, check if user is in service_providers or clients
+          const { data: provider } = await supabase
+            .from('service_providers')
+            .select('id')
+            .eq('id', session.user.id)
+            .single()
+          
+          if (provider) {
+            router.push('/provider/dashboard')
+            return
+          }
+          
+          const { data: client } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('id', session.user.id)
+            .single()
+          
+          if (client) {
+            router.push('/client/dashboard')
+            return
+          }
+          
           router.push('/')
+        }
+      } catch (error) {
+        console.error('Dashboard error:', error)
+        router.push('/login')
+      } finally {
+        setLoading(false)
       }
     }
 
-    checkAuth()
+    checkAndRedirect()
   }, [router])
 
-  if (checking) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue mx-auto"></div>
+          <p className="mt-4 text-gray-500">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
   return null
