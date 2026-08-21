@@ -62,13 +62,14 @@ export default function Navbar() {
     }
   }
 
+  // 🔥 FIX: Always fallback to /dashboard if profile is null or role unknown
   const getDashboardLink = () => {
-    if (!profile) return '/login'
+    if (!profile) return '/dashboard'
     switch (profile.role) {
       case 'ADMIN': return '/admin/dashboard'
       case 'CLIENT': return '/client/dashboard'
       case 'SERVICE_PROVIDER': return '/provider/dashboard'
-      default: return '/login'
+      default: return '/dashboard'
     }
   }
 
