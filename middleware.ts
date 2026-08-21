@@ -1,14 +1,18 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Matches the CHECK constraint in supabase-schema.sql:
-// role TEXT NOT NULL CHECK (role IN ('CLIENT', 'SERVICE_PROVIDER', 'ADMIN'))
 type Role = 'CLIENT' | 'SERVICE_PROVIDER' | 'ADMIN'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request,
   })
+
+  // 🔍 DIAGNOSTIC: Log all cookies
+  console.log('=== MIDDLEWARE COOKIES ===')
+  const allCookies = request.cookies.getAll()
+  console.log('Cookies found:', allCookies.map(c => c.name))
+  console.log('Full cookie list:', allCookies)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +23,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
+          console.log('🔍 Setting cookies in middleware:', cookiesToSet.map(c => c.name))
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -31,17 +36,15 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refreshes the session (required on every request, since Vercel's
-  // serverless functions don't share memory between invocations).
+  // 🔍 DIAGNOSTIC: Check if we can get the user
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser()
+  
+  console.log('🔍 getUser result:', user?.email || 'No user', 'Error:', userError?.message || 'None')
 
   const path = request.nextUrl.pathname
-
-  // --- Which paths need which role? ---
-  // TODO: confirm these prefixes match your real app/ route folder names
-  // (I couldn't list the app/ directory via GitHub's API - robots.txt blocks it).
   const protectedPrefixes: { prefix: string; role: Role | 'any' }[] = [
     { prefix: '/admin', role: 'ADMIN' },
     { prefix: '/provider', role: 'SERVICE_PROVIDER' },
@@ -52,14 +55,13 @@ export async function middleware(request: NextRequest) {
   const matchedRoute = protectedPrefixes.find((r) => path.startsWith(r.prefix))
 
   if (matchedRoute) {
-    // Not signed in at all -> bounce to login
     if (!user) {
+      console.log('🔍 No user found, redirecting to login')
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirectedFrom', path)
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Signed in but needs a specific role -> check profiles.role
     if (matchedRoute.role !== 'any') {
       const { data: profile } = await supabase
         .from('profiles')
