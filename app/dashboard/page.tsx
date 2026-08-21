@@ -6,57 +6,42 @@ export default async function DashboardRedirect() {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
-  // 🔍 DIAGNOSTIC: Check what we're getting
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  // Use getSession() – it's more reliable than getUser()
+  const { data: { session }, error } = await supabase.auth.getSession()
 
-  // Log to Vercel console
-  console.log('=== /dashboard DIAGNOSTIC ===')
-  console.log('User:', user)
-  console.log('User error:', userError)
-  console.log('Session:', session)
-  console.log('Session error:', sessionError)
-  console.log('Cookies:', cookieStore.getAll().map(c => c.name))
+  // Debug: log to Vercel console
+  console.log('[Dashboard] Session:', session?.user?.email, 'Error:', error)
 
-  if (!user) {
-    // Fallback: try getSession as backup
-    if (session) {
-      // Session exists but getUser failed? Let's redirect to provider dashboard directly
-      console.log('getUser failed but session exists – manually redirecting')
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-      if (profile?.role === 'SERVICE_PROVIDER') {
-        redirect('/provider/dashboard')
-      } else if (profile?.role === 'CLIENT') {
-        redirect('/client/dashboard')
-      } else if (profile?.role === 'ADMIN') {
-        redirect('/admin/dashboard')
-      }
-    }
+  if (!session) {
+    console.log('[Dashboard] No session, redirecting to login')
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
+  const user = session.user
+
+  // Get user profile
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
 
-  if (!profile) {
+  if (profileError || !profile) {
+    console.log('[Dashboard] No profile for user', user.id, profileError)
     redirect('/')
   }
 
-  if (profile.role === 'ADMIN') {
-    redirect('/admin/dashboard')
-  } else if (profile.role === 'CLIENT') {
-    redirect('/client/dashboard')
-  } else if (profile.role === 'SERVICE_PROVIDER') {
-    redirect('/provider/dashboard')
-  } else {
-    redirect('/')
+  console.log('[Dashboard] Role:', profile.role, 'Redirecting...')
+
+  // Redirect based on role
+  switch (profile.role) {
+    case 'ADMIN':
+      redirect('/admin/dashboard')
+    case 'CLIENT':
+      redirect('/client/dashboard')
+    case 'SERVICE_PROVIDER':
+      redirect('/provider/dashboard')
+    default:
+      redirect('/')
   }
 }
