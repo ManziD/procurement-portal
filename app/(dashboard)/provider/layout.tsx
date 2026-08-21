@@ -1,7 +1,6 @@
-import { getCurrentUser } from '@/lib/supabase/client'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { 
   LayoutDashboard, 
@@ -13,29 +12,28 @@ import {
   Briefcase,
   Inbox
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase/client'
+import { supabase as clientSupabase } from '@/lib/supabase/client' // only for logout button
 
 export default async function ProviderLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
-
+  // 1. Get the user session server-side
   const cookieStore = cookies()
-  const supabaseServer = createClient(cookieStore)
+  const supabase = createClient(cookieStore)
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // 🔥 FIX: Include is_premium and premium_expires_at
-  const { data: provider } = await supabaseServer
+  if (!user) {
+    redirect('/login')
+  }
+
+  // 2. Fetch provider profile
+  const { data: provider } = await supabase
     .from('service_providers')
     .select('business_name, phone, services_offered, serves_locations, is_premium, premium_expires_at')
     .eq('id', user.id)
     .single()
-
-  // If provider hasn't set up their profile, redirect to setup
-  // (This check is done on the dashboard page, not here, to avoid infinite loop)
-  // We'll just show the layout, and dashboard will handle redirect.
 
   const navLinks = [
     { href: '/provider/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -77,7 +75,7 @@ export default async function ProviderLayout({
           ))}
           <button
             onClick={async () => {
-              await supabase.auth.signOut()
+              await clientSupabase.auth.signOut()
               window.location.href = '/'
             }}
             className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors w-full text-left text-red-600"
