@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { getCurrentUser } from '@/lib/supabase/client'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MessageCircle, Clock, CheckCircle, XCircle } from 'lucide-react'
@@ -15,7 +15,6 @@ export default async function ProviderInbox() {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
-  // Fetch all invitations with request and client info
   const { data: invitations, error } = await supabase
     .from('invitations')
     .select(`
@@ -48,7 +47,6 @@ export default async function ProviderInbox() {
     console.error('Error fetching inbox:', error)
   }
 
-  // Get provider's premium status
   const { data: provider } = await supabase
     .from('service_providers')
     .select('is_premium')
@@ -57,7 +55,6 @@ export default async function ProviderInbox() {
 
   const isPremium = provider?.is_premium || false
 
-  // Helper to get status badge
   const getStatusBadge = (status: string) => {
     const map: Record<string, { label: string, className: string }> = {
       'PENDING': { label: 'New', className: 'bg-yellow-500' },
@@ -68,7 +65,6 @@ export default async function ProviderInbox() {
     return map[status] || { label: status, className: 'bg-gray-500' }
   }
 
-  // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'PENDING': return <Clock className="h-4 w-4" />
