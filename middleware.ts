@@ -8,12 +8,6 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
-  // 🔍 DIAGNOSTIC: Log all cookies
-  console.log('=== MIDDLEWARE COOKIES ===')
-  const allCookies = request.cookies.getAll()
-  console.log('Cookies found:', allCookies.map(c => c.name))
-  console.log('Full cookie list:', allCookies)
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -23,7 +17,6 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          console.log('🔍 Setting cookies in middleware:', cookiesToSet.map(c => c.name))
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -36,15 +29,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // 🔍 DIAGNOSTIC: Check if we can get the user
+  // Refresh session
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser()
-  
-  console.log('🔍 getUser result:', user?.email || 'No user', 'Error:', userError?.message || 'None')
 
   const path = request.nextUrl.pathname
+
   const protectedPrefixes: { prefix: string; role: Role | 'any' }[] = [
     { prefix: '/admin', role: 'ADMIN' },
     { prefix: '/provider', role: 'SERVICE_PROVIDER' },
@@ -56,7 +47,6 @@ export async function middleware(request: NextRequest) {
 
   if (matchedRoute) {
     if (!user) {
-      console.log('🔍 No user found, redirecting to login')
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirectedFrom', path)
       return NextResponse.redirect(redirectUrl)
