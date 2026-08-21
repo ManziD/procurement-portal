@@ -25,6 +25,9 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          persistSession: true, // ← FIX: ensures session is saved to localStorage
+        },
       })
 
       if (error) throw error
