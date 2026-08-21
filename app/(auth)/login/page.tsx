@@ -25,12 +25,9 @@ export default function LoginPage() {
       console.log('🔍 1. Attempting login...')
 
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: {
-          persistSession: true,
-        },
-      })
+  email,
+  password,
+})
 
       if (error) throw error
 
