@@ -17,7 +17,7 @@ interface Provider {
   bio: string | null
   rating: number
   services_offered: string[]
-  location: string | null
+  serves_locations: string[]
   is_verified: boolean
 }
 
@@ -41,7 +41,6 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>('')
   
-  // Form state
   const [formData, setFormData] = useState({
     description: '',
     timeline: '',
@@ -52,7 +51,6 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
     verificationCode: '',
   })
 
-  // Providers state
   const [availableProviders, setAvailableProviders] = useState<Provider[]>([])
   const [selectedProviders, setSelectedProviders] = useState<string[]>([])
   const [loadingProviders, setLoadingProviders] = useState(false)
@@ -62,21 +60,9 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
   const [verificationSent, setVerificationSent] = useState(false)
   const [clientId, setClientId] = useState<string | null>(null)
 
-  // Progress indicator
-  const stepLabels: Record<Step, string> = {
-    category: 'Service',
-    description: 'Details',
-    location: 'Location',
-    providers: 'Providers',
-    'select-providers': 'Select',
-    phone: 'Phone',
-    verify: 'Verify',
-    confirm: 'Done'
-  }
   const stepOrder: Step[] = ['category', 'description', 'location', 'providers', 'select-providers', 'phone', 'verify', 'confirm']
   const currentStepIndex = stepOrder.indexOf(step)
 
-  // Fetch providers when category and location are set
   useEffect(() => {
     if (step === 'providers' && selectedCategoryId && formData.division) {
       fetchProviders()
@@ -87,23 +73,21 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
     setLoadingProviders(true)
     setError(null)
     try {
-      // Query providers that match category (services_offered contains category name) 
-      // and are in the same division or have no location restriction
+      // Query providers that have the selected category in their services_offered array
       const { data, error } = await supabase
         .from('service_providers')
-        .select('id, business_name, bio, rating, services_offered, location, is_verified')
+        .select('id, business_name, bio, rating, services_offered, serves_locations, is_verified')
         .contains('services_offered', [selectedCategoryName])
         .order('rating', { ascending: false })
 
       if (error) throw error
 
-      // Filter by location: if provider has location, it should contain the division, or if null, include them
-      const filtered = (data || []).filter(p => {
-        if (!p.location) return true
-        return p.location.toLowerCase().includes(formData.division.toLowerCase())
-      })
+      // Filter by location: provider must serve the client's division
+      const filtered = (data || []).filter(p => 
+        p.serves_locations && p.serves_locations.includes(formData.division)
+      )
 
-      setAvailableProviders(filtered.slice(0, 10)) // show max 10
+      setAvailableProviders(filtered.slice(0, 10))
       setSelectedProviders([])
     } catch (err: any) {
       setError(err.message)
@@ -269,7 +253,7 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
     )
   }
 
-  // Step 4: Show providers (recommendations)
+  // Step 4: Show providers
   if (step === 'providers') {
     return (
       <div>
@@ -414,14 +398,8 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
         return
       }
 
-      // Generate a random 4-digit code (for demo, we'll just set it to "1234")
       const code = Math.floor(1000 + Math.random() * 9000).toString()
-      
-      // In production, send SMS via Twilio/Africa's Talking
-      // For now, we'll store the code in state and show it in the UI for testing
       setFormData({ ...formData, verificationCode: code })
-      
-      // Show the code for testing (remove later)
       alert(`Your verification code is: ${code}`)
       setVerificationSent(true)
       setStep('verify')
@@ -499,7 +477,6 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
         return
       }
 
-      // Code matches – submit the request
       await handleSubmit()
     }
 
@@ -509,7 +486,6 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
       try {
         // 1. Insert or get client
         let clientId: string | null = null
-        // Check if client exists
         const { data: existingClient } = await supabase
           .from('clients')
           .select('id')
@@ -519,7 +495,6 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
         if (existingClient) {
           clientId = existingClient.id
         } else {
-          // Insert new client
           const { data: newClient, error: clientError } = await supabase
             .from('clients')
             .insert({
@@ -535,10 +510,7 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
           clientId = newClient.id
         }
 
-        // 2. Generate tracking token
-        const trackingToken = Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
-
-        // 3. Insert service request
+        // 2. Insert service request (tracking token auto-generated)
         const { data: request, error: requestError } = await supabase
           .from('service_requests')
           .insert({
@@ -550,15 +522,14 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
             division: formData.division,
             parish: formData.parish,
             timeline: formData.timeline,
-            tracking_token: trackingToken,
             status: 'INVITED',
           })
-          .select('id')
+          .select('id, tracking_token')
           .single()
 
         if (requestError) throw requestError
 
-        // 4. Insert invitations for selected providers
+        // 3. Insert invitations for selected providers
         const invitations = selectedProviders.map(providerId => ({
           request_id: request.id,
           provider_id: providerId,
@@ -571,8 +542,7 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
 
         if (inviteError) throw inviteError
 
-        // 5. Save tracking token for confirmation
-        setTrackingToken(trackingToken)
+        setTrackingToken(request.tracking_token)
         setStep('confirm')
 
       } catch (err: any) {
@@ -673,6 +643,5 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
     )
   }
 
-  // Fallback (should never reach)
   return null
 }
