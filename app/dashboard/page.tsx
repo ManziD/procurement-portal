@@ -1,62 +1,74 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+'use client'
 
-export default async function DashboardRedirect() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
 
-  // Use getSession()
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+export default function DashboardRedirect() {
+  const router = useRouter()
+  const [checking, setChecking] = useState(true)
 
-  if (sessionError || !session) {
-    console.error('Dashboard: No session', sessionError)
-    redirect('/login')
-  }
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
 
-  const user = session.user
+      // Get user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
 
-  // Get user profile
-  let { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+      if (!profile) {
+        // No profile – try to detect if it's a provider or client
+        const { data: provider } = await supabase
+          .from('service_providers')
+          .select('id')
+          .eq('id', session.user.id)
+          .single()
+        if (provider) {
+          router.push('/provider/dashboard')
+          return
+        }
+        const { data: client } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('id', session.user.id)
+          .single()
+        if (client) {
+          router.push('/client/dashboard')
+          return
+        }
+        router.push('/')
+        return
+      }
 
-  // If no profile, check if user is a provider
-  if (!profile) {
-    const { data: provider } = await supabase
-      .from('service_providers')
-      .select('id')
-      .eq('id', user.id)
-      .single()
-
-    if (provider) {
-      redirect('/provider/dashboard')
+      // Redirect based on role
+      switch (profile.role) {
+        case 'ADMIN':
+          router.push('/admin/dashboard')
+          break
+        case 'CLIENT':
+          router.push('/client/dashboard')
+          break
+        case 'SERVICE_PROVIDER':
+          router.push('/provider/dashboard')
+          break
+        default:
+          router.push('/')
+      }
     }
 
-    const { data: client } = await supabase
-      .from('clients')
-      .select('id')
-      .eq('id', user.id)
-      .single()
+    checkAuth()
+  }, [router])
 
-    if (client) {
-      redirect('/client/dashboard')
-    }
-
-    redirect('/')
+  if (checking) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
 
-  // Redirect based on role
-  switch (profile.role) {
-    case 'ADMIN':
-      redirect('/admin/dashboard')
-    case 'CLIENT':
-      redirect('/client/dashboard')
-    case 'SERVICE_PROVIDER':
-      redirect('/provider/dashboard')
-    default:
-      redirect('/')
-  }
+  return null
 }
