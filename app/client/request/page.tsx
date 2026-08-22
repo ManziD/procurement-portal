@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import * as Icons from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { KAMPALA_LOCATIONS } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,23 @@ export default function ClientRequestPage() {
 
   // Step state
   const [step, setStep] = useState<'category' | 'location' | 'confirm'>('category')
+
+  // Icon mapping
+  const iconMap: Record<string, any> = {
+    'Sparkle': Icons.Sparkle,
+    'Wrench': Icons.Wrench,
+    'Zap': Icons.Zap,
+    'Globe': Icons.Globe,
+    'Palette': Icons.Palette,
+    'GraduationCap': Icons.GraduationCap,
+    'Utensils': Icons.Utensils,
+    'Shield': Icons.Shield,
+    'HardHat': Icons.HardHat,
+    'Monitor': Icons.Monitor,
+    'Camera': Icons.Camera,
+    'Scale': Icons.Scale,
+    'Calculator': Icons.Calculator,
+  }
 
   // Fetch categories and check auth on mount
   useEffect(() => {
@@ -92,13 +110,13 @@ export default function ClientRequestPage() {
           profile_id: user.id,
           category_id: selectedCategoryId,
           title: `${selectedCategoryName} in ${parish}`,
-          description: '', // Optional – we can add a description field later
+          description: '',
           location: `${parish}, ${division}`,
           division: division,
           parish: parish,
-          timeline: 'ASAP', // Default – we can add this later
+          timeline: 'ASAP',
           status: 'INVITED',
-          client_id: null, // This will be handled later when we link to clients table
+          client_id: null,
         })
         .select('id, tracking_token')
         .single()
@@ -196,24 +214,33 @@ export default function ClientRequestPage() {
               <p className="text-gray-500">No categories available.</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategoryId(cat.id)
-                      setSelectedCategoryName(cat.name)
-                      setStep('location')
-                    }}
-                    className={`p-4 border rounded-lg text-center transition-all hover:shadow-md ${
-                      selectedCategoryId === cat.id
-                        ? 'border-primary-blue bg-primary-blue/5'
-                        : 'border-gray-200 hover:border-primary-blue'
-                    }`}
-                  >
-                    <div className="text-2xl mb-1">{cat.icon || '🔧'}</div>
-                    <div className="font-medium text-sm">{cat.name}</div>
-                  </button>
-                ))}
+                {categories.map((cat) => {
+                  const IconComponent = iconMap[cat.icon || '']
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategoryId(cat.id)
+                        setSelectedCategoryName(cat.name)
+                        setStep('location')
+                      }}
+                      className={`p-4 border rounded-lg text-center transition-all hover:shadow-md ${
+                        selectedCategoryId === cat.id
+                          ? 'border-primary-blue bg-primary-blue/5'
+                          : 'border-gray-200 hover:border-primary-blue'
+                      }`}
+                    >
+                      <div className="text-2xl mb-1 flex justify-center">
+                        {IconComponent ? (
+                          <IconComponent className="w-8 h-8 text-primary-blue" />
+                        ) : (
+                          <span>🔧</span>
+                        )}
+                      </div>
+                      <div className="font-medium text-sm">{cat.name}</div>
+                    </button>
+                  )
+                })}
               </div>
             )}
             <div className="mt-6 flex justify-between">
