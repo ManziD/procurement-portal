@@ -34,6 +34,9 @@ export default function ClientRequestPage() {
   const [division, setDivision] = useState<string>('')
   const [parish, setParish] = useState<string>('')
 
+  // Phone number
+  const [phone, setPhone] = useState<string>('')
+
   // Step state
   const [step, setStep] = useState<'category' | 'location' | 'confirm'>('category')
 
@@ -103,6 +106,11 @@ export default function ClientRequestPage() {
         return
       }
 
+      if (!phone || phone.length < 10) {
+        setError('Please enter a valid phone number')
+        return
+      }
+
       // Insert service request
       const { data: request, error: requestError } = await supabase
         .from('service_requests')
@@ -117,6 +125,7 @@ export default function ClientRequestPage() {
           timeline: 'ASAP',
           status: 'INVITED',
           client_id: null,
+          client_phone: phone, // <-- ADDED
         })
         .select('id, tracking_token')
         .single()
@@ -302,6 +311,24 @@ export default function ClientRequestPage() {
                 </select>
               </div>
 
+              {/* Phone input */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Phone number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g., 0750123456"
+                  className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  This helps us identify your request and send you updates.
+                </p>
+              </div>
+
               {error && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
                   {error}
@@ -317,7 +344,7 @@ export default function ClientRequestPage() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={!division || !parish || submitting}
+                  disabled={!division || !parish || !phone || submitting}
                   className="px-6 py-2 bg-accent-orange text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {submitting ? 'Submitting...' : 'Post Request'}
