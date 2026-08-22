@@ -27,6 +27,10 @@ export default function PortalPage() {
   const [providerData, setProviderData] = useState<any>(null)
   const [invitations, setInvitations] = useState<any[]>([])
   const [bids, setBids] = useState<any[]>([])
+  
+  // Client requests
+  const [clientRequests, setClientRequests] = useState<any[]>([])
+  const [loadingRequests, setLoadingRequests] = useState(true)
 
   // Login form state
   const [email, setEmail] = useState('')
@@ -115,6 +119,29 @@ export default function PortalPage() {
         setBids(bidData || [])
       }
 
+      // 4. If client, fetch their requests
+      if (profileData?.role === 'CLIENT') {
+        const { data: requests } = await supabase
+          .from('service_requests')
+          .select(`
+            id,
+            title,
+            description,
+            location,
+            division,
+            parish,
+            status,
+            created_at,
+            timeline,
+            tracking_token
+          `)
+          .eq('profile_id', session.user.id)
+          .order('created_at', { ascending: false })
+
+        setClientRequests(requests || [])
+        setLoadingRequests(false)
+      }
+
       setLoading(false)
     }
 
@@ -132,6 +159,7 @@ export default function PortalPage() {
         setProviderData(null)
         setInvitations([])
         setBids([])
+        setClientRequests([])
       }
     })
 
@@ -272,8 +300,9 @@ export default function PortalPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link href="/request">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Post a Request - NOW POINTS TO /client/request */}
+          <Link href="/client/request">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-dashed border-primary-blue/30 hover:border-primary-blue">
               <CardContent className="pt-6 text-center">
                 <div className="text-4xl mb-3">📝</div>
@@ -287,14 +316,43 @@ export default function PortalPage() {
             </Card>
           </Link>
 
+          {/* My Requests - NOW SHOWS ACTUAL REQUESTS */}
           <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-4xl mb-3">📋</div>
-              <h3 className="text-lg font-semibold">My Requests</h3>
-              <p className="text-sm text-gray-500 mt-1">Track your service requests</p>
-              <div className="mt-4 text-sm text-gray-400">
-                Coming soon...
+            <CardContent className="pt-6">
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-3">📋</div>
+                <h3 className="text-lg font-semibold">My Requests</h3>
+                <p className="text-sm text-gray-500 mt-1">Track your service requests</p>
+                {!loadingRequests && (
+                  <p className="text-2xl font-bold text-primary-blue mt-2">{clientRequests.length}</p>
+                )}
               </div>
+              {!loadingRequests && clientRequests.length > 0 && (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {clientRequests.slice(0, 5).map((req) => (
+                    <Link
+                      key={req.id}
+                      href={`/track/${req.tracking_token}`}
+                      className="block"
+                    >
+                      <div className="border rounded-lg p-3 hover:shadow-md transition-shadow text-sm">
+                        <div className="font-medium truncate">{req.title}</div>
+                        <div className="text-gray-500 text-xs flex justify-between mt-1">
+                          <span>{req.location}</span>
+                          <Badge className={req.status === 'OPEN' ? 'bg-green-500' : 'bg-yellow-500'}>
+                            {req.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {!loadingRequests && clientRequests.length === 0 && (
+                <div className="text-center text-gray-400 text-sm mt-2">
+                  No requests yet.
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
