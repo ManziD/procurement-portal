@@ -12,6 +12,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirect to home after successful login
-  return NextResponse.redirect(requestUrl.origin)
+  // Redirect to home page after Google login
+  return NextResponse.redirect(new URL('/', requestUrl.origin))
 }
