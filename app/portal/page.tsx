@@ -43,7 +43,6 @@ export default function PortalPage() {
     const loadData = async () => {
       setLoading(true)
       
-      // 1. Get session
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session?.user) {
@@ -55,7 +54,6 @@ export default function PortalPage() {
 
       setUser(session.user)
 
-      // 2. Get profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -64,9 +62,7 @@ export default function PortalPage() {
 
       setProfile(profileData)
 
-      // 3. If provider, fetch provider data, invitations, and bids
       if (profileData?.role === 'SERVICE_PROVIDER') {
-        // Get provider record
         const { data: provider } = await supabase
           .from('service_providers')
           .select('*')
@@ -75,7 +71,6 @@ export default function PortalPage() {
         
         setProviderData(provider)
 
-        // Get recent invitations (limit 5)
         const { data: invData } = await supabase
           .from('invitations')
           .select(`
@@ -97,7 +92,6 @@ export default function PortalPage() {
 
         setInvitations(invData || [])
 
-        // Get recent bids (limit 5)
         const { data: bidData } = await supabase
           .from('bids')
           .select(`
@@ -119,7 +113,6 @@ export default function PortalPage() {
         setBids(bidData || [])
       }
 
-      // 4. If client, fetch their requests
       if (profileData?.role === 'CLIENT') {
         const { data: requests } = await supabase
           .from('service_requests')
@@ -147,11 +140,9 @@ export default function PortalPage() {
 
     loadData()
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user)
-        // Reload data
         loadData()
       } else {
         setUser(null)
@@ -301,7 +292,6 @@ export default function PortalPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Post a Request - NOW POINTS TO /client/request */}
           <Link href="/client/request">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-dashed border-primary-blue/30 hover:border-primary-blue">
               <CardContent className="pt-6 text-center">
@@ -316,7 +306,6 @@ export default function PortalPage() {
             </Card>
           </Link>
 
-          {/* My Requests - NOW SHOWS ACTUAL REQUESTS */}
           <Card>
             <CardContent className="pt-6">
               <div className="text-center mb-4">
@@ -378,6 +367,23 @@ export default function PortalPage() {
             Logout
           </Button>
         </div>
+
+        {/* === PROFILE COMPLETION BANNER === */}
+        {providerData && (!providerData.services_offered?.length || !providerData.serves_locations?.length) && (
+          <Card className="mb-6 border-yellow-400 bg-yellow-50">
+            <CardContent className="pt-4 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-yellow-700">Complete your profile</p>
+                <p className="text-sm text-yellow-600">Add your services and service areas to start receiving requests.</p>
+              </div>
+              <Link href="/provider/profile">
+                <Button variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-100">
+                  Update Profile
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
