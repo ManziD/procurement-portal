@@ -19,10 +19,10 @@ export async function POST(request: Request) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Verify request and token
+    // 1. Verify the tracking token
     const { data: requestData, error: requestError } = await supabase
       .from('service_requests')
-      .select('id, status')
+      .select('id')
       .eq('id', requestId)
       .eq('tracking_token', trackingToken)
       .single()
@@ -34,33 +34,26 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify bid
-    const { data: bidData, error: bidError } = await supabase
-      .from('bids')
-      .select('id, status')
-      .eq('id', bidId)
-      .eq('request_id', requestId)
-      .single()
+    // 2. Call the PostgreSQL function (bypasses RLS)
+    const { data: result, error: functionError } = await supabase.rpc('reject_bid', {
+      bid_id: bidId,
+      request_id: requestId,
+    })
 
-    if (bidError || !bidData) {
+    if (functionError) {
+      console.error('Function error:', functionError)
       return NextResponse.json(
-        { error: 'Bid not found' },
-        { status: 404 }
+        { error: 'Failed to reject bid' },
+        { status: 500 }
       )
     }
 
-    if (bidData.status !== 'PENDING') {
+    if (result && result.success === false) {
       return NextResponse.json(
-        { error: 'Bid is no longer pending' },
+        { error: result.error || 'Failed to reject bid' },
         { status: 400 }
       )
     }
-
-    // Reject bid
-    await supabase
-      .from('bids')
-      .update({ status: 'REJECTED' })
-      .eq('id', bidId)
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
