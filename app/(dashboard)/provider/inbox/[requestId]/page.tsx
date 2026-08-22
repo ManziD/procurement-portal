@@ -29,7 +29,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
       setError(null)
 
       try {
-        // 1. Get session client‑side
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
           router.push('/login')
@@ -39,7 +38,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
         const userId = session.user.id
         setProviderId(userId)
 
-        // 2. Get invitation
         const { data: invitationData, error: invError } = await supabase
           .from('invitations')
           .select(`
@@ -81,7 +79,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
         setRequest(req)
         setClient(req?.client || null)
 
-        // 3. Get provider premium status
         const { data: provider } = await supabase
           .from('service_providers')
           .select('is_premium')
@@ -90,7 +87,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
 
         setIsPremium(provider?.is_premium || false)
 
-        // 4. Get existing bid
         const { data: bid } = await supabase
           .from('bids')
           .select('*')
@@ -100,7 +96,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
 
         setExistingBid(bid)
 
-        // 5. Update invitation status to VIEWED if PENDING
         if (invitationData.status === 'PENDING') {
           await supabase
             .from('invitations')
@@ -108,7 +103,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
             .eq('id', invitationData.id)
         }
 
-        // 6. Get all bids for this request
         const { data: allBidsData } = await supabase
           .from('bids')
           .select('*, provider:service_providers(business_name, is_premium)')
@@ -137,9 +131,13 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
 
   return (
     <div>
-      <Link href="/provider/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
-        ← Back to Inbox
-      </Link>
+      {/* Back to Dashboard button */}
+      <button
+        onClick={() => router.push('/provider/dashboard')}
+        className="inline-flex items-center text-primary-blue hover:underline mb-4 cursor-pointer"
+      >
+        ← Back to Dashboard
+      </button>
 
       <Card className="mb-6">
         <CardHeader>
