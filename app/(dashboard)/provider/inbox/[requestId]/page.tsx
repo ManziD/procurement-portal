@@ -1,26 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { getCurrentUser } from '@/lib/supabase/client'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { supabase as clientSupabase } from '@/lib/supabase/client'
-import { Calendar, MapPin, User, Phone, DollarSign, Clock } from 'lucide-react'
-
-// We'll need a client component for the bid form
+import { Calendar, MapPin, Clock } from 'lucide-react'
 import BidForm from './BidForm'
 
 export default async function InboxDetail({ params }: { params: { requestId: string } }) {
   const { requestId } = params
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
 
+  // Server‑side auth
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
 
   // Get the invitation and all related data
   const { data: invitation, error: invError } = await supabase
@@ -53,7 +51,9 @@ export default async function InboxDetail({ params }: { params: { requestId: str
     .eq('request_id', requestId)
     .single()
 
-  if (invError || !invitation) notFound()
+  if (invError || !invitation) {
+    notFound()
+  }
 
   const request = invitation.request as any
   const client = request?.client as any
@@ -92,12 +92,10 @@ export default async function InboxDetail({ params }: { params: { requestId: str
 
   return (
     <div>
-      {/* Back button */}
       <Link href="/provider/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
         ← Back to Inbox
       </Link>
 
-      {/* Header: Request info */}
       <Card className="mb-6">
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -147,7 +145,6 @@ export default async function InboxDetail({ params }: { params: { requestId: str
         </CardContent>
       </Card>
 
-      {/* All Bids */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg">Bids ({allBids?.length || 0})</CardTitle>
@@ -196,7 +193,6 @@ export default async function InboxDetail({ params }: { params: { requestId: str
         </CardContent>
       </Card>
 
-      {/* Bid Form (only if no existing bid or bid is pending/rejected) */}
       {(!existingBid || existingBid.status === 'REJECTED' || existingBid.status === 'WITHDRAWN') && (
         <Card>
           <CardHeader>
