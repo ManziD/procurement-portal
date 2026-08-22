@@ -131,9 +131,9 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
 
   return (
     <div>
-      {/* Back to Dashboard button */}
+      {/* Back to Dashboard button - now points to /portal */}
       <button
-        onClick={() => router.push('/provider/dashboard')}
+        onClick={() => router.push('/portal')}
         className="inline-flex items-center text-primary-blue hover:underline mb-4 cursor-pointer"
       >
         ← Back to Dashboard
