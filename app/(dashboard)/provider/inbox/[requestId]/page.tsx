@@ -1,94 +1,139 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { redirect, notFound } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, MapPin, Clock } from 'lucide-react'
 import BidForm from './BidForm'
 
-export default async function InboxDetail({ params }: { params: { requestId: string } }) {
+export default function InboxDetail({ params }: { params: { requestId: string } }) {
   const { requestId } = params
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [invitation, setInvitation] = useState<any>(null)
+  const [request, setRequest] = useState<any>(null)
+  const [client, setClient] = useState<any>(null)
+  const [isPremium, setIsPremium] = useState(false)
+  const [existingBid, setExistingBid] = useState<any>(null)
+  const [allBids, setAllBids] = useState<any[]>([])
+  const [providerId, setProviderId] = useState<string | null>(null)
 
-  // Server‑side auth
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
-  const { data: { user } } = await supabase.auth.getUser()
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true)
+      setError(null)
 
-  if (!user) {
-    redirect('/login')
+      try {
+        // 1. Get session client‑side
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          router.push('/login')
+          return
+        }
+
+        const userId = session.user.id
+        setProviderId(userId)
+
+        // 2. Get invitation
+        const { data: invitationData, error: invError } = await supabase
+          .from('invitations')
+          .select(`
+            id,
+            status,
+            created_at,
+            updated_at,
+            request:service_requests (
+              id,
+              title,
+              description,
+              location,
+              division,
+              parish,
+              timeline,
+              budget_range,
+              status,
+              created_at,
+              client:clients (
+                id,
+                name,
+                phone,
+                is_premium
+              )
+            )
+          `)
+          .eq('provider_id', userId)
+          .eq('request_id', requestId)
+          .single()
+
+        if (invError || !invitationData) {
+          setError('Invitation not found')
+          setLoading(false)
+          return
+        }
+
+        setInvitation(invitationData)
+        const req = invitationData.request as any
+        setRequest(req)
+        setClient(req?.client || null)
+
+        // 3. Get provider premium status
+        const { data: provider } = await supabase
+          .from('service_providers')
+          .select('is_premium')
+          .eq('id', userId)
+          .single()
+
+        setIsPremium(provider?.is_premium || false)
+
+        // 4. Get existing bid
+        const { data: bid } = await supabase
+          .from('bids')
+          .select('*')
+          .eq('request_id', requestId)
+          .eq('provider_id', userId)
+          .single()
+
+        setExistingBid(bid)
+
+        // 5. Update invitation status to VIEWED if PENDING
+        if (invitationData.status === 'PENDING') {
+          await supabase
+            .from('invitations')
+            .update({ status: 'VIEWED' })
+            .eq('id', invitationData.id)
+        }
+
+        // 6. Get all bids for this request
+        const { data: allBidsData } = await supabase
+          .from('bids')
+          .select('*, provider:service_providers(business_name, is_premium)')
+          .eq('request_id', requestId)
+          .order('created_at', { ascending: false })
+
+        setAllBids(allBidsData || [])
+
+      } catch (err: any) {
+        setError(err.message || 'Something went wrong')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [requestId, router])
+
+  if (loading) {
+    return <div className="text-center py-8">Loading...</div>
   }
 
-  // Get the invitation and all related data
-  const { data: invitation, error: invError } = await supabase
-    .from('invitations')
-    .select(`
-      id,
-      status,
-      created_at,
-      updated_at,
-      request:service_requests (
-        id,
-        title,
-        description,
-        location,
-        division,
-        parish,
-        timeline,
-        budget_range,
-        status,
-        created_at,
-        client:clients (
-          id,
-          name,
-          phone,
-          is_premium
-        )
-      )
-    `)
-    .eq('provider_id', user.id)
-    .eq('request_id', requestId)
-    .single()
-
-  if (invError || !invitation) {
-    notFound()
+  if (error || !request) {
+    return <div className="text-center py-8 text-red-600">{error || 'Request not found'}</div>
   }
-
-  const request = invitation.request as any
-  const client = request?.client as any
-
-  // Get provider premium status
-  const { data: provider } = await supabase
-    .from('service_providers')
-    .select('is_premium')
-    .eq('id', user.id)
-    .single()
-
-  const isPremium = provider?.is_premium || false
-
-  // Get existing bid if any
-  const { data: existingBid } = await supabase
-    .from('bids')
-    .select('*')
-    .eq('request_id', requestId)
-    .eq('provider_id', user.id)
-    .single()
-
-  // Update invitation status to VIEWED if it's PENDING
-  if (invitation.status === 'PENDING') {
-    await supabase
-      .from('invitations')
-      .update({ status: 'VIEWED' })
-      .eq('id', invitation.id)
-  }
-
-  // Get all bids for this request (including other providers)
-  const { data: allBids } = await supabase
-    .from('bids')
-    .select('*, provider:service_providers(business_name, is_premium)')
-    .eq('request_id', requestId)
-    .order('created_at', { ascending: false })
 
   return (
     <div>
@@ -100,20 +145,20 @@ export default async function InboxDetail({ params }: { params: { requestId: str
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl">{request?.title}</CardTitle>
+              <CardTitle className="text-xl">{request.title}</CardTitle>
               <div className="flex flex-wrap gap-3 mt-1 text-sm text-gray-600">
-                <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{request?.location}</span>
-                <span className="flex items-center"><Clock className="h-4 w-4 mr-1" />{request?.timeline || 'No timeline'}</span>
-                <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(request?.created_at).toLocaleDateString()}</span>
+                <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{request.location}</span>
+                <span className="flex items-center"><Clock className="h-4 w-4 mr-1" />{request.timeline || 'No timeline'}</span>
+                <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(request.created_at).toLocaleDateString()}</span>
               </div>
             </div>
             <Badge className={`${
-              request?.status === 'INVITED' ? 'bg-blue-500' :
-              request?.status === 'BIDS_RECEIVED' ? 'bg-yellow-500' :
-              request?.status === 'AWARDED' ? 'bg-green-500' :
+              request.status === 'INVITED' ? 'bg-blue-500' :
+              request.status === 'BIDS_RECEIVED' ? 'bg-yellow-500' :
+              request.status === 'AWARDED' ? 'bg-green-500' :
               'bg-gray-500'
             }`}>
-              {request?.status}
+              {request.status}
             </Badge>
           </div>
         </CardHeader>
@@ -121,7 +166,7 @@ export default async function InboxDetail({ params }: { params: { requestId: str
           <div className="space-y-2">
             <div>
               <span className="text-sm font-medium text-gray-500">Description</span>
-              <p className="text-gray-800">{request?.description || 'No description provided.'}</p>
+              <p className="text-gray-800">{request.description || 'No description provided.'}</p>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-2">
               <div>
@@ -147,16 +192,16 @@ export default async function InboxDetail({ params }: { params: { requestId: str
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg">Bids ({allBids?.length || 0})</CardTitle>
+          <CardTitle className="text-lg">Bids ({allBids.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {!allBids || allBids.length === 0 ? (
+          {allBids.length === 0 ? (
             <p className="text-gray-500">No bids yet. Be the first to submit!</p>
           ) : (
             <div className="space-y-4">
               {allBids.map((bid) => {
                 const providerInfo = bid.provider as any
-                const isOwn = bid.provider_id === user.id
+                const isOwn = bid.provider_id === providerId
                 return (
                   <div key={bid.id} className={`border rounded-lg p-4 ${isOwn ? 'bg-primary-blue/5 border-primary-blue' : 'bg-white'}`}>
                     <div className="flex justify-between items-start">
