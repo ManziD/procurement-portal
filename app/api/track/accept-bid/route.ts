@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Verify the request and token
+    // Verify request and token
     const { data: requestData, error: requestError } = await supabase
       .from('service_requests')
       .select('id, status')
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify the bid
+    // Verify bid
     const { data: bidData, error: bidError } = await supabase
       .from('bids')
       .select('id, status')
@@ -56,34 +56,26 @@ export async function POST(request: Request) {
       )
     }
 
-    // Accept the bid
-    const { error: updateBidError } = await supabase
+    // Accept bid
+    await supabase
       .from('bids')
       .update({ status: 'ACCEPTED' })
       .eq('id', bidId)
 
-    if (updateBidError) throw updateBidError
-
-    // Update request status
-    const { error: updateRequestError } = await supabase
+    // Update request
+    await supabase
       .from('service_requests')
       .update({ status: 'AWARDED' })
       .eq('id', requestId)
 
-    if (updateRequestError) throw updateRequestError
-
-    // Reject other bids
-    const { error: rejectError } = await supabase
+    // Reject others
+    await supabase
       .from('bids')
       .update({ status: 'REJECTED' })
       .eq('request_id', requestId)
       .neq('id', bidId)
 
-    if (rejectError) throw rejectError
-
-    return NextResponse.redirect(
-      new URL(`/track/${trackingToken}`, request.url)
-    )
+    return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('Accept bid error:', error)
     return NextResponse.json(
