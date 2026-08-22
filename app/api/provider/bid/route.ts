@@ -1,20 +1,39 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
-    const { data: { user } } = await supabase.auth.getUser()
+    // 1. Get token from Authorization header
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const token = authHeader.split(' ')[1]
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized. Please log in.' },
-        { status: 401 }
-      )
+    // 2. Create Supabase client with the token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    )
+
+    // 3. Verify the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // 4. Parse request body
     const body = await request.json()
     const { requestId, price, timeline, message } = body
 
@@ -39,7 +58,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Check invitation
+    // 5. Check invitation
     const { data: invitation, error: inviteError } = await supabase
       .from('invitations')
       .select('id, status')
@@ -54,7 +73,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Check duplicate bid
+    // 6. Check duplicate bid
     const { data: existingBid } = await supabase
       .from('bids')
       .select('id')
@@ -69,7 +88,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Insert bid
+    // 7. Insert bid
     const { data: bid, error: bidError } = await supabase
       .from('bids')
       .insert({
@@ -91,7 +110,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Update invitation status
+    // 8. Update invitation status
     await supabase
       .from('invitations')
       .update({ status: 'BID_SUBMITTED' })
