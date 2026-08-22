@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Verify token
+    // Verify the tracking token
     const { data: requestData, error: requestError } = await supabase
       .from('service_requests')
       .select('id')
@@ -34,10 +34,10 @@ export async function POST(request: Request) {
       )
     }
 
-    // Call the function
+    // Call the PostgreSQL function (passing req_id as the second argument)
     const { data: result, error: functionError } = await supabase.rpc('accept_bid', {
       bid_id: bidId,
-      request_id: requestId,
+      req_id: requestId,   // note: parameter name is req_id
     })
 
     if (functionError) {
