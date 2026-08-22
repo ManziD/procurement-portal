@@ -13,7 +13,6 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
-  // 1. Fetch the request using the token
   const { data: request, error: requestError } = await supabase
     .from('service_requests')
     .select('*')
@@ -24,7 +23,6 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
     notFound()
   }
 
-  // 2. Fetch bids for this request with provider info
   const { data: bids } = await supabase
     .from('bids')
     .select(`
@@ -73,7 +71,6 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
     return map[status] || 'bg-gray-500'
   }
 
-  // Status message helper
   const getStatusMessage = (status: string) => {
     switch (status) {
       case 'INVITED':
@@ -167,6 +164,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
                         <form action="/api/track/accept-bid" method="POST">
                           <input type="hidden" name="bidId" value={bid.id} />
                           <input type="hidden" name="requestId" value={request.id} />
+                          <input type="hidden" name="trackingToken" value={token} />
                           <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
                             Accept
                           </Button>
@@ -174,6 +172,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
                         <form action="/api/track/reject-bid" method="POST">
                           <input type="hidden" name="bidId" value={bid.id} />
                           <input type="hidden" name="requestId" value={request.id} />
+                          <input type="hidden" name="trackingToken" value={token} />
                           <Button type="submit" variant="destructive">
                             Reject
                           </Button>
@@ -208,7 +207,6 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         </div>
       )}
 
-      {/* Call to action */}
       <div className="mt-8 text-center text-sm text-gray-500">
         <p>Need help? Contact us at <a href="mailto:info@servicehub-ug.com" className="text-primary-blue hover:underline">info@servicehub-ug.com</a></p>
         <div className="mt-2 flex justify-center gap-4">
