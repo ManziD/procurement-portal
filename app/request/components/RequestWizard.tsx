@@ -60,13 +60,11 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
   const [verificationSent, setVerificationSent] = useState(false)
   const [clientId, setClientId] = useState<string | null>(null)
 
-  // --- NEW: Store logged-in user's profile ID ---
   const [loggedInProfileId, setLoggedInProfileId] = useState<string | null>(null)
 
   const stepOrder: Step[] = ['category', 'description', 'location', 'providers', 'select-providers', 'phone', 'verify', 'confirm']
   const currentStepIndex = stepOrder.indexOf(step)
 
-  // --- NEW: Fetch logged-in user's profile ID ---
   useEffect(() => {
     const getProfileId = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -540,7 +538,8 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
             parish: formData.parish,
             timeline: formData.timeline,
             status: 'INVITED',
-            profile_id: loggedInProfileId, // <-- ADDED
+            profile_id: loggedInProfileId,
+            client_phone: formData.phone, // <-- ADDED
           })
           .select('id, tracking_token')
           .single()
