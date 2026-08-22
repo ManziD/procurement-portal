@@ -22,43 +22,15 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      console.log('🔍 1. Attempting login...')
-
       const { data, error } = await supabase.auth.signInWithPassword({
-  email,
-  password,
-})
+        email,
+        password,
+      })
 
       if (error) throw error
 
-      console.log('✅ 2. Login successful. User:', data.user?.email)
-      console.log('🔍 3. Session object:', data.session ? 'EXISTS ✅' : 'MISSING ❌')
-
-      // Check localStorage directly
-      const token = localStorage.getItem('supabase.auth.token')
-      console.log('🔍 4. localStorage token after login:', token ? 'FOUND ✅' : 'MISSING ❌')
-
-      // Check all keys
-      const allKeys = Object.keys(localStorage)
-      const supabaseKeys = allKeys.filter(k => k.includes('sb-') || k.includes('supabase'))
-      console.log('🔍 5. All localStorage keys containing "sb-" or "supabase":', supabaseKeys)
-
-      // Redirect based on role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single()
-
-      if (profile?.role === 'ADMIN') {
-        router.push('/admin/dashboard')
-      } else if (profile?.role === 'CLIENT') {
-        router.push('/client/dashboard')
-      } else if (profile?.role === 'SERVICE_PROVIDER') {
-        router.push('/provider/dashboard')
-      } else {
-        router.push('/')
-      }
+      // ✅ Always go to home page after login (no role-based redirect)
+      router.push('/')
     } catch (error: any) {
       console.error('❌ Login error:', error)
       setError(error.message)
