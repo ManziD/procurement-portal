@@ -62,12 +62,10 @@ export default function Navbar() {
     }
   }
 
-  // 🔥 ALWAYS use the new client-side dashboard page
   const getDashboardLink = () => {
     return '/portal'
   }
 
-  // Define quicklinks for mobile menu
   const quickLinks = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Browse Services', href: '/browse', icon: Search },
@@ -195,7 +193,7 @@ export default function Navbar() {
                 </Link>
                 {profile?.role === 'CLIENT' && (
                   <Link
-                    href="/client/post-rfs"
+                    href="/client/request"
                     className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
                     onClick={() => setIsMenuOpen(false)}
                   >
