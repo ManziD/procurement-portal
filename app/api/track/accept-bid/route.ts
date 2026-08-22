@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // 1. Verify the tracking token (this is the security check)
+    // Verify token
     const { data: requestData, error: requestError } = await supabase
       .from('service_requests')
       .select('id')
@@ -34,16 +34,16 @@ export async function POST(request: Request) {
       )
     }
 
-    // 2. Call the PostgreSQL function (bypasses RLS)
+    // Call the function
     const { data: result, error: functionError } = await supabase.rpc('accept_bid', {
       bid_id: bidId,
       request_id: requestId,
     })
 
     if (functionError) {
-      console.error('Function error:', functionError)
+      console.error('RPC error:', functionError)
       return NextResponse.json(
-        { error: 'Failed to accept bid' },
+        { error: functionError.message || 'Database function failed' },
         { status: 500 }
       )
     }
