@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -27,9 +28,21 @@ export default function BidForm({ requestId, existingBid }: BidFormProps) {
     setError(null)
 
     try {
+      // 1. Get the session to retrieve the access token
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
+      if (!token) {
+        throw new Error('You must be logged in to submit a bid')
+      }
+
+      // 2. Make the API request with the token
       const res = await fetch('/api/provider/bid', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           requestId,
           price: parseInt(form.price),
@@ -44,6 +57,7 @@ export default function BidForm({ requestId, existingBid }: BidFormProps) {
         throw new Error(data.error || 'Failed to submit bid')
       }
 
+      // 3. Refresh the page to show the updated bid
       router.refresh()
     } catch (err: any) {
       setError(err.message)
