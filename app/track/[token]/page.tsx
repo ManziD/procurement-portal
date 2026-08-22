@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2 } from 'lucide-react'
+import TrackActions from './TrackActions'
 
 export default async function TrackTokenPage({ params }: { params: { token: string } }) {
   const { token } = params
@@ -160,24 +161,11 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
                       </div>
                     </div>
                     {isPending && !isCompleted && (
-                      <div className="flex gap-2">
-                        <form action="/api/track/accept-bid" method="POST">
-                          <input type="hidden" name="bidId" value={bid.id} />
-                          <input type="hidden" name="requestId" value={request.id} />
-                          <input type="hidden" name="trackingToken" value={token} />
-                          <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
-                            Accept
-                          </Button>
-                        </form>
-                        <form action="/api/track/reject-bid" method="POST">
-                          <input type="hidden" name="bidId" value={bid.id} />
-                          <input type="hidden" name="requestId" value={request.id} />
-                          <input type="hidden" name="trackingToken" value={token} />
-                          <Button type="submit" variant="destructive">
-                            Reject
-                          </Button>
-                        </form>
-                      </div>
+                      <TrackActions
+                        bidId={bid.id}
+                        requestId={request.id}
+                        trackingToken={token}
+                      />
                     )}
                     {isAccepted && (
                       <Badge className="bg-green-600">Accepted</Badge>
