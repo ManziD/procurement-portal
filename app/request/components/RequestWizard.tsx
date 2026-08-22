@@ -60,8 +60,27 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
   const [verificationSent, setVerificationSent] = useState(false)
   const [clientId, setClientId] = useState<string | null>(null)
 
+  // --- NEW: Store logged-in user's profile ID ---
+  const [loggedInProfileId, setLoggedInProfileId] = useState<string | null>(null)
+
   const stepOrder: Step[] = ['category', 'description', 'location', 'providers', 'select-providers', 'phone', 'verify', 'confirm']
   const currentStepIndex = stepOrder.indexOf(step)
+
+  // --- NEW: Fetch logged-in user's profile ID ---
+  useEffect(() => {
+    const getProfileId = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single()
+        if (profile) setLoggedInProfileId(profile.id)
+      }
+    }
+    getProfileId()
+  }, [])
 
   useEffect(() => {
     if (step === 'providers' && selectedCategoryId && formData.division) {
@@ -73,7 +92,6 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
     setLoadingProviders(true)
     setError(null)
     try {
-      // Query providers that have the selected category in their services_offered array
       const { data, error } = await supabase
         .from('service_providers')
         .select('id, business_name, bio, rating, services_offered, serves_locations, is_verified')
@@ -82,7 +100,6 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
 
       if (error) throw error
 
-      // Filter by location: provider must serve the client's division
       const filtered = (data || []).filter(p => 
         p.serves_locations && p.serves_locations.includes(formData.division)
       )
@@ -523,6 +540,7 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
             parish: formData.parish,
             timeline: formData.timeline,
             status: 'INVITED',
+            profile_id: loggedInProfileId, // <-- ADDED
           })
           .select('id, tracking_token')
           .single()
