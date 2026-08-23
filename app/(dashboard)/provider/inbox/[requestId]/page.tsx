@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Clock } from 'lucide-react'
+import { Calendar, MapPin, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import BidForm from './BidForm'
 import Chat from '@/components/Chat'
 
@@ -24,6 +24,7 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
   const [allBids, setAllBids] = useState<any[]>([])
   const [providerId, setProviderId] = useState<string | null>(null)
   const [chatProps, setChatProps] = useState<any>(null)
+  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -122,9 +123,10 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
             setChatProps({
               requestId: requestId,
               currentUserId: userId,
-              recipientId: req.profile_id, // Use profile_id, not client.id
+              recipientId: req.profile_id,
               recipientName: req.client?.name || 'Client',
             })
+            setShowChat(true)
           }
         }
 
@@ -146,116 +148,111 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
     return <div className="text-center py-8 text-red-600">{error || 'Request not found'}</div>
   }
 
-  // Determine if we should show the client's phone
   const showClientPhone = isPremium || request.status === 'AWARDED' || request.status === 'COMPLETED'
 
   return (
     <div>
-      <button
-        onClick={() => router.push('/portal')}
-        className="inline-flex items-center text-primary-blue hover:underline mb-4 cursor-pointer"
-      >
-        ← Back to Dashboard
-      </button>
+      <Link href="/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
+        ← Back to Inbox
+      </Link>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-xl">{request.title}</CardTitle>
-              <div className="flex flex-wrap gap-3 mt-1 text-sm text-gray-600">
-                <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{request.location}</span>
-                <span className="flex items-center"><Clock className="h-4 w-4 mr-1" />{request.timeline || 'No timeline'}</span>
-                <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(request.created_at).toLocaleDateString()}</span>
-              </div>
+      {/* Chat - shown first when available */}
+      {showChat && chatProps && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">💬 Conversation</h2>
+          <Chat {...chatProps} />
+        </div>
+      )}
+
+      {/* Request Details (collapsible) */}
+      <details className="mb-6 border rounded-lg p-4 bg-gray-50">
+        <summary className="cursor-pointer font-medium text-gray-700 flex items-center gap-2">
+          <span>📋 Request Details</span>
+          <ChevronDown className="h-4 w-4" />
+        </summary>
+        <div className="mt-4 space-y-3">
+          <div>
+            <h3 className="text-xl font-semibold text-primary-blue">{request.title}</h3>
+            <div className="flex flex-wrap gap-3 mt-1 text-sm text-gray-600">
+              <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{request.location}</span>
+              <span className="flex items-center"><Clock className="h-4 w-4 mr-1" />{request.timeline || 'No timeline'}</span>
+              <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(request.created_at).toLocaleDateString()}</span>
             </div>
-            <Badge className={`${
-              request.status === 'INVITED' ? 'bg-blue-500' :
-              request.status === 'BIDS_RECEIVED' ? 'bg-yellow-500' :
-              request.status === 'AWARDED' ? 'bg-green-500' :
-              'bg-gray-500'
-            }`}>
-              {request.status}
-            </Badge>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
+          <p className="text-gray-700">{request.description || 'No description provided.'}</p>
+          <div className="grid grid-cols-2 gap-4 mt-2">
             <div>
-              <span className="text-sm font-medium text-gray-500">Description</span>
-              <p className="text-gray-800">{request.description || 'No description provided.'}</p>
+              <span className="text-sm font-medium text-gray-500">Client</span>
+              <p className="font-medium">{client?.name || 'Anonymous'}</p>
             </div>
-            <div className="grid grid-cols-2 gap-4 mt-2">
+            {showClientPhone && client?.phone && (
               <div>
-                <span className="text-sm font-medium text-gray-500">Client</span>
-                <p className="font-medium">{client?.name || 'Anonymous'}</p>
+                <span className="text-sm font-medium text-gray-500">Phone</span>
+                <p className="font-medium text-primary-blue">{client.phone}</p>
               </div>
-              {showClientPhone && client?.phone && (
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Phone</span>
-                  <p className="font-medium text-primary-blue">{client.phone}</p>
-                </div>
-              )}
-              {!showClientPhone && client?.phone && (
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Phone</span>
-                  <p className="text-gray-400 text-sm">
-                    {request.status === 'AWARDED' || request.status === 'COMPLETED' ? 'Contact info available after job is awarded' : '🔒 Upgrade to Premium to see contact details'}
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
+            {!showClientPhone && client?.phone && (
+              <div>
+                <span className="text-sm font-medium text-gray-500">Phone</span>
+                <p className="text-gray-400 text-sm">
+                  {request.status === 'AWARDED' || request.status === 'COMPLETED' ? 'Contact info available after job is awarded' : '🔒 Upgrade to Premium to see contact details'}
+                </p>
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </details>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Bids ({allBids.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {allBids.length === 0 ? (
-            <p className="text-gray-500">No bids yet. Be the first to submit!</p>
-          ) : (
-            <div className="space-y-4">
-              {allBids.map((bid) => {
-                const providerInfo = bid.provider as any
-                const isOwn = bid.provider_id === providerId
-                return (
-                  <div key={bid.id} className={`border rounded-lg p-4 ${isOwn ? 'bg-primary-blue/5 border-primary-blue' : 'bg-white'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-semibold">
-                          {isOwn ? 'You' : providerInfo?.business_name || 'Unknown Provider'}
-                          {isOwn && <span className="text-xs ml-2 bg-primary-blue text-white px-2 py-0.5 rounded-full">Your Bid</span>}
+      {/* Bids (only if not awarded/completed or if user wants to see) */}
+      {!showChat && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Bids ({allBids.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {allBids.length === 0 ? (
+              <p className="text-gray-500">No bids yet. Be the first to submit!</p>
+            ) : (
+              <div className="space-y-4">
+                {allBids.map((bid) => {
+                  const providerInfo = bid.provider as any
+                  const isOwn = bid.provider_id === providerId
+                  return (
+                    <div key={bid.id} className={`border rounded-lg p-4 ${isOwn ? 'bg-primary-blue/5 border-primary-blue' : 'bg-white'}`}>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-semibold">
+                            {isOwn ? 'You' : providerInfo?.business_name || 'Unknown Provider'}
+                            {isOwn && <span className="text-xs ml-2 bg-primary-blue text-white px-2 py-0.5 rounded-full">Your Bid</span>}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            <span className="font-medium">UGX {bid.price?.toLocaleString()}</span>
+                            {' • '}
+                            <span>{bid.timeline}</span>
+                          </div>
+                          {bid.message && <p className="text-sm text-gray-700 mt-1">{bid.message}</p>}
+                          <div className="mt-1">
+                            <Badge className={`${
+                              bid.status === 'ACCEPTED' ? 'bg-green-500' :
+                              bid.status === 'REJECTED' ? 'bg-red-500' :
+                              'bg-yellow-500'
+                            }`}>
+                              {bid.status}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                          <span className="font-medium">UGX {bid.price?.toLocaleString()}</span>
-                          {' • '}
-                          <span>{bid.timeline}</span>
+                        <div className="text-xs text-gray-400">
+                          {new Date(bid.created_at).toLocaleDateString()}
                         </div>
-                        {bid.message && <p className="text-sm text-gray-700 mt-1">{bid.message}</p>}
-                        <div className="mt-1">
-                          <Badge className={`${
-                            bid.status === 'ACCEPTED' ? 'bg-green-500' :
-                            bid.status === 'REJECTED' ? 'bg-red-500' :
-                            'bg-yellow-500'
-                          }`}>
-                            {bid.status}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {new Date(bid.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {(!existingBid || existingBid.status === 'REJECTED' || existingBid.status === 'WITHDRAWN') && (
         <Card>
@@ -282,13 +279,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Chat */}
-      {chatProps && (
-        <div className="mt-8">
-          <Chat {...chatProps} />
-        </div>
       )}
     </div>
   )
