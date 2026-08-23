@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Briefcase, Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react'
+import { Briefcase, Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, MessageCircle, HelpCircle, FileText, Shield, Home } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -42,37 +42,60 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* For Clients */}
+          {/* Support */}
           <div>
-            <h4 className="text-white font-semibold mb-4">For Clients</h4>
+            <h4 className="text-white font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/client/post-rfs" className="hover:text-accent-orange transition-colors">Post a Request</Link></li>
-              <li><Link href="/client/my-rfs" className="hover:text-accent-orange transition-colors">My Requests</Link></li>
-              <li><Link href="/browse" className="hover:text-accent-orange transition-colors">Find Providers</Link></li>
+              <li><a href="#" className="hover:text-accent-orange transition-colors flex items-center gap-2"><MessageCircle className="h-4 w-4" /> Chat with Us</a></li>
+              <li><a href="#" className="hover:text-accent-orange transition-colors flex items-center gap-2"><HelpCircle className="h-4 w-4" /> Help Center</a></li>
+              <li><a href="#" className="hover:text-accent-orange transition-colors flex items-center gap-2"><FileText className="h-4 w-4" /> Contact Us</a></li>
+              <li><a href="#" className="hover:text-accent-orange transition-colors flex items-center gap-2"><Shield className="h-4 w-4" /> Terms &amp; Conditions</a></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
             <h4 className="text-white font-semibold mb-4">Contact</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-3 text-sm">
               <li className="flex items-start">
                 <MapPin className="h-4 w-4 mr-2 mt-0.5 text-accent-orange" />
-                <span>Kampala, Uganda</span>
+                <span>
+                  <span className="font-medium">ServiceHub UG</span><br />
+                  Bweyogerere, Kampala, Uganda
+                </span>
               </li>
               <li className="flex items-center">
                 <Phone className="h-4 w-4 mr-2 text-accent-orange" />
-                <span>+256 750 349 712</span>
+                <div className="flex flex-col">
+                  <a href="https://wa.me/256750349712" target="_blank" rel="noopener noreferrer" className="hover:text-accent-orange transition-colors">
+                    0750 349 712
+                  </a>
+                  <a href="https://wa.me/256771206810" target="_blank" rel="noopener noreferrer" className="hover:text-accent-orange transition-colors">
+                    0771 206 810
+                  </a>
+                </div>
               </li>
               <li className="flex items-center">
                 <Mail className="h-4 w-4 mr-2 text-accent-orange" />
-                <span>info@servicehub-ug.com</span>
+                <a href="mailto:info@servicehub-ug.com" className="hover:text-accent-orange transition-colors">
+                  info@servicehub-ug.com
+                </a>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+        {/* Second row: additional links */}
+        <div className="border-t border-gray-800 mt-8 pt-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+            <a href="#" className="hover:text-accent-orange transition-colors">Report a Service</a>
+            <a href="#" className="hover:text-accent-orange transition-colors">Return &amp; Refund Policy</a>
+            <a href="#" className="hover:text-accent-orange transition-colors">Privacy Policy Notice</a>
+            <a href="#" className="hover:text-accent-orange transition-colors">Cookie Notice</a>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 mt-6 pt-6 text-center text-sm">
           <p>&copy; {new Date().getFullYear()} ServiceHub-Ug. All rights reserved. Built for Kampala, Uganda.</p>
         </div>
       </div>
