@@ -3,12 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import * as Icons from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { KAMPALA_LOCATIONS } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 interface Category {
   id: string
@@ -16,14 +14,21 @@ interface Category {
   icon: string | null
 }
 
-interface Provider {
-  id: string
-  business_name: string
-  bio: string | null
-  rating: number
-  services_offered: string[]
-  serves_locations: string[]
-  is_verified: boolean
+// Emoji mapping (same as public wizard)
+const emojiMap: Record<string, string> = {
+  'Sparkle': '✨',
+  'Wrench': '🔧',
+  'Zap': '⚡',
+  'Globe': '🌐',
+  'Palette': '🎨',
+  'GraduationCap': '🎓',
+  'Utensils': '🍽️',
+  'Shield': '🛡️',
+  'HardHat': '⛑️',
+  'Monitor': '🖥️',
+  'Camera': '📷',
+  'Scale': '⚖️',
+  'Calculator': '🧮',
 }
 
 export default function ClientRequestPage() {
@@ -37,41 +42,14 @@ export default function ClientRequestPage() {
   const [success, setSuccess] = useState(false)
   const [trackingToken, setTrackingToken] = useState<string | null>(null)
 
-  // Step 1: Category selection
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('')
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>('')
 
-  // Step 2: Location selection
   const [division, setDivision] = useState<string>('')
   const [parish, setParish] = useState<string>('')
-
-  // Step 3: Provider selection
-  const [availableProviders, setAvailableProviders] = useState<Provider[]>([])
-  const [selectedProviders, setSelectedProviders] = useState<string[]>([])
-  const [loadingProviders, setLoadingProviders] = useState(false)
-
-  // Phone number
   const [phone, setPhone] = useState<string>('')
 
-  // Step state
   const [step, setStep] = useState<'category' | 'location' | 'providers' | 'confirm'>('category')
-
-  // Icon mapping
-  const iconMap: Record<string, any> = {
-    'Sparkle': Icons.Sparkle,
-    'Wrench': Icons.Wrench,
-    'Zap': Icons.Zap,
-    'Globe': Icons.Globe,
-    'Palette': Icons.Palette,
-    'GraduationCap': Icons.GraduationCap,
-    'Utensils': Icons.Utensils,
-    'Shield': Icons.Shield,
-    'HardHat': Icons.HardHat,
-    'Monitor': Icons.Monitor,
-    'Camera': Icons.Camera,
-    'Scale': Icons.Scale,
-    'Calculator': Icons.Calculator,
-  }
 
   // Fetch categories and check auth on mount
   useEffect(() => {
@@ -103,6 +81,11 @@ export default function ClientRequestPage() {
 
     loadData()
   }, [])
+
+  // Provider selection state
+  const [availableProviders, setAvailableProviders] = useState<any[]>([])
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([])
+  const [loadingProviders, setLoadingProviders] = useState(false)
 
   // Fetch providers when category and location are set
   useEffect(() => {
@@ -161,7 +144,6 @@ export default function ClientRequestPage() {
         return
       }
 
-      // Insert service request
       const { data: request, error: requestError } = await supabase
         .from('service_requests')
         .insert({
@@ -182,7 +164,6 @@ export default function ClientRequestPage() {
 
       if (requestError) throw requestError
 
-      // Insert invitations for selected providers
       const invitations = selectedProviders.map(providerId => ({
         request_id: request.id,
         provider_id: providerId,
@@ -205,16 +186,12 @@ export default function ClientRequestPage() {
     }
   }
 
-  // --- LOADING ---
+  // ... (loading, not logged in, success states)
+
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
-      </div>
-    )
+    return <div className="min-h-[60vh] flex items-center justify-center">Loading...</div>
   }
 
-  // --- NOT LOGGED IN ---
   if (!user) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
@@ -233,7 +210,6 @@ export default function ClientRequestPage() {
     )
   }
 
-  // --- SUCCESS ---
   if (success && trackingToken) {
     const trackingUrl = `${window.location.origin}/track/${trackingToken}`
     return (
@@ -272,7 +248,7 @@ export default function ClientRequestPage() {
     )
   }
 
-  // --- STEP 1: CATEGORY ---
+  // STEP 1: CATEGORY
   if (step === 'category') {
     return (
       <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -286,33 +262,24 @@ export default function ClientRequestPage() {
               <p className="text-gray-500">No categories available.</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {categories.map((cat) => {
-                  const IconComponent = iconMap[cat.icon || '']
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategoryId(cat.id)
-                        setSelectedCategoryName(cat.name)
-                        setStep('location')
-                      }}
-                      className={`p-4 border rounded-lg text-center transition-all hover:shadow-md ${
-                        selectedCategoryId === cat.id
-                          ? 'border-primary-blue bg-primary-blue/5'
-                          : 'border-gray-200 hover:border-primary-blue'
-                      }`}
-                    >
-                      <div className="text-2xl mb-1 flex justify-center">
-                        {IconComponent ? (
-                          <IconComponent className="w-8 h-8 text-primary-blue" />
-                        ) : (
-                          <span>🔧</span>
-                        )}
-                      </div>
-                      <div className="font-medium text-sm">{cat.name}</div>
-                    </button>
-                  )
-                })}
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategoryId(cat.id)
+                      setSelectedCategoryName(cat.name)
+                      setStep('location')
+                    }}
+                    className={`p-4 border rounded-lg text-center transition-all hover:shadow-md ${
+                      selectedCategoryId === cat.id
+                        ? 'border-primary-blue bg-primary-blue/5'
+                        : 'border-gray-200 hover:border-primary-blue'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">{emojiMap[cat.icon || ''] || '🔧'}</div>
+                    <div className="font-medium text-sm">{cat.name}</div>
+                  </button>
+                ))}
               </div>
             )}
             <div className="mt-6 flex justify-between">
@@ -326,7 +293,7 @@ export default function ClientRequestPage() {
     )
   }
 
-  // --- STEP 2: LOCATION ---
+  // STEP 2: LOCATION
   if (step === 'location') {
     const divisions = Object.keys(KAMPALA_LOCATIONS)
     const parishes = division ? KAMPALA_LOCATIONS[division as keyof typeof KAMPALA_LOCATIONS] : []
@@ -396,7 +363,7 @@ export default function ClientRequestPage() {
     )
   }
 
-  // --- STEP 3: PROVIDER SELECTION ---
+  // STEP 3: PROVIDER SELECTION
   if (step === 'providers') {
     const toggleProvider = (id: string) => {
       setSelectedProviders(prev => {
@@ -489,7 +456,7 @@ export default function ClientRequestPage() {
     )
   }
 
-  // --- STEP 4: CONFIRM & PHONE ---
+  // STEP 4: CONFIRM & PHONE
   if (step === 'confirm') {
     return (
       <div className="container mx-auto px-4 py-8 max-w-3xl">
