@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2 } from 'lucide-react'
-import TrackActions from './TrackActions'
+import Chat from '@/components/Chat'
+import { getCurrentUser } from '@/lib/supabase/client'
 
 export default async function TrackTokenPage({ params }: { params: { token: string } }) {
   const { token } = params
@@ -14,6 +15,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
+  // Get the request
   const { data: request, error: requestError } = await supabase
     .from('service_requests')
     .select('*')
@@ -24,6 +26,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
     notFound()
   }
 
+  // Get bids
   const { data: bids } = await supabase
     .from('bids')
     .select(`
@@ -36,11 +39,36 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
       provider:service_providers (
         id,
         business_name,
-        rating
+        rating,
+        phone
       )
     `)
     .eq('request_id', request.id)
     .order('created_at', { ascending: false })
+
+  // Get current user (to show chat if logged in)
+  const user = await getCurrentUser()
+  let chatProps = null
+  if (user) {
+    // If request is awarded or completed, find the accepted bid
+    if (request.status === 'AWARDED' || request.status === 'COMPLETED') {
+      const acceptedBid = bids?.find(b => b.status === 'ACCEPTED')
+      if (acceptedBid && acceptedBid.provider) {
+        const provider = acceptedBid.provider as any
+        chatProps = {
+          requestId: request.id,
+          currentUserId: user.id,
+          recipientId: provider.id,
+          recipientName: provider.business_name || 'Provider',
+        }
+      }
+    }
+  }
+
+  // Determine if we should show the provider's phone (client sees it when awarded/completed)
+  const showProviderPhone = request.status === 'AWARDED' || request.status === 'COMPLETED'
+  const acceptedBid = bids?.find(b => b.status === 'ACCEPTED')
+  const provider = acceptedBid?.provider as any
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
@@ -141,7 +169,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
       ) : (
         <div className="space-y-4">
           {bids.map((bid) => {
-            const provider = bid.provider as any
+            const providerData = bid.provider as any
             const isPending = bid.status === 'PENDING' && request.status === 'INVITED'
             const isAccepted = bid.status === 'ACCEPTED'
             return (
@@ -149,23 +177,42 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-semibold">{provider?.business_name || 'Anonymous Provider'}</div>
+                      <div className="font-semibold">{providerData?.business_name || 'Anonymous Provider'}</div>
                       <div className="text-sm text-gray-600">
                         <span className="font-medium">{formatCurrency(bid.price)}</span>
                         {' • '}
                         <span>{bid.timeline}</span>
                       </div>
                       {bid.message && <p className="text-sm text-gray-700 mt-1">{bid.message}</p>}
+                      {/* Show provider phone if status is AWARDED or COMPLETED */}
+                      {showProviderPhone && providerData?.phone && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          📞 Provider phone: {providerData.phone}
+                        </div>
+                      )}
                       <div className="mt-2">
                         <Badge className={getBidStatusBadge(bid.status)}>{bid.status}</Badge>
                       </div>
                     </div>
                     {isPending && !isCompleted && (
-                      <TrackActions
-                        bidId={bid.id}
-                        requestId={request.id}
-                        trackingToken={token}
-                      />
+                      <div className="flex gap-2">
+                        <form action="/api/track/accept-bid" method="POST">
+                          <input type="hidden" name="bidId" value={bid.id} />
+                          <input type="hidden" name="requestId" value={request.id} />
+                          <input type="hidden" name="trackingToken" value={token} />
+                          <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                            Accept
+                          </Button>
+                        </form>
+                        <form action="/api/track/reject-bid" method="POST">
+                          <input type="hidden" name="bidId" value={bid.id} />
+                          <input type="hidden" name="requestId" value={request.id} />
+                          <input type="hidden" name="trackingToken" value={token} />
+                          <Button type="submit" variant="destructive">
+                            Reject
+                          </Button>
+                        </form>
+                      </div>
                     )}
                     {isAccepted && (
                       <Badge className="bg-green-600">Accepted</Badge>
@@ -192,6 +239,13 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
               Mark as Completed
             </Button>
           </form>
+        </div>
+      )}
+
+      {/* Chat (only if logged in and request is awarded or completed) */}
+      {chatProps && (
+        <div className="mt-8">
+          <Chat {...chatProps} />
         </div>
       )}
 
