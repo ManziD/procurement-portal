@@ -56,6 +56,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-6 pt-6 text-center text-sm">
           <p>&copy; {new Date().getFullYear()} ServiceHub-Ug. All rights reserved.</p>
+          <p>Design by Manzi</p>
         </div>
       </div>
     </footer>
