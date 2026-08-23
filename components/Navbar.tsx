@@ -18,6 +18,7 @@ import {
   LogIn,
   UserPlus,
   MessageCircle,
+  ShieldCheck,
 } from 'lucide-react'
 import LocationDropdown from './LocationDropdown'
 import { Button } from './ui/button'
@@ -64,7 +65,13 @@ export default function Navbar() {
   }
 
   const getDashboardLink = () => {
-    return '/portal'
+    if (!profile) return '/portal'
+    switch (profile.role) {
+      case 'ADMIN': return '/admin/dashboard'
+      case 'CLIENT': return '/portal'
+      case 'SERVICE_PROVIDER': return '/portal'
+      default: return '/portal'
+    }
   }
 
   const quickLinks = [
@@ -112,6 +119,14 @@ export default function Navbar() {
                     Dashboard
                   </Button>
                 </Link>
+                {profile?.role === 'ADMIN' && (
+                  <Link href="/admin/dashboard">
+                    <Button variant="secondary" className="bg-white text-primary-blue hover:bg-gray-100">
+                      <ShieldCheck className="h-4 w-4 mr-1" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
                 <Link href="/inbox">
                   <Button variant="secondary" className="bg-white text-primary-blue hover:bg-gray-100">
                     <MessageCircle className="h-4 w-4 mr-1" />
@@ -199,7 +214,17 @@ export default function Navbar() {
                   <span>Dashboard</span>
                 </Link>
 
-                {/* Inbox link always points to /inbox */}
+                {profile?.role === 'ADMIN' && (
+                  <Link
+                    href="/admin/dashboard"
+                    className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <ShieldCheck className="h-5 w-5" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+
                 <Link
                   href="/inbox"
                   className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
