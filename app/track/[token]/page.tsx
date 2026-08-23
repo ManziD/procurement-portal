@@ -49,6 +49,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
   let chatProps = null
   let showChat = false
 
+  // Check if user is logged in and request is awarded/completed
   if (user) {
     if (request.status === 'AWARDED' || request.status === 'COMPLETED') {
       const acceptedBid = bids?.find(b => b.status === 'ACCEPTED')
@@ -138,7 +139,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
       </div>
 
-      {/* Chat - shown first when available */}
+      {/* CHAT - PRIMARY VIEW when awarded/completed */}
       {showChat && chatProps && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">💬 Conversation</h2>
@@ -146,8 +147,8 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         </div>
       )}
 
-      {/* Request Details (collapsible) - now below chat */}
-      <details className="mb-6 border rounded-lg p-4 bg-gray-50">
+      {/* Request Details - collapsed when chat is shown */}
+      <details className={`mb-6 border rounded-lg p-4 ${showChat ? 'bg-gray-50' : ''}`}>
         <summary className="cursor-pointer font-medium text-gray-700 flex items-center gap-2">
           <span>📋 Request Details</span>
           <ChevronDown className="h-4 w-4" />
@@ -168,7 +169,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         </div>
       </details>
 
-      {/* Bids (only show if not awarded/completed or if user wants to see) */}
+      {/* Bids section - hidden when chat is shown (since the job is awarded/completed) */}
       {!showChat && (
         <>
           <h2 className="text-xl font-semibold text-primary-blue mb-4">Bids ({bids?.length || 0})</h2>
@@ -225,7 +226,7 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         </>
       )}
 
-      {/* Mark as Completed Button (only if awarded) */}
+      {/* Mark as Completed Button (only if awarded and not completed) */}
       {canMarkComplete && (
         <div className="mt-8 flex justify-center">
           <form action="/api/track/complete-request" method="POST">
