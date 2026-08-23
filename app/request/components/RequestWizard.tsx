@@ -36,6 +36,23 @@ type Step =
   | 'verify'
   | 'confirm'
 
+// Emoji mapping for categories (replaces Lucide icons)
+const emojiMap: Record<string, string> = {
+  'Sparkle': '✨',
+  'Wrench': '🔧',
+  'Zap': '⚡',
+  'Globe': '🌐',
+  'Palette': '🎨',
+  'GraduationCap': '🎓',
+  'Utensils': '🍽️',
+  'Shield': '🛡️',
+  'HardHat': '⛑️',
+  'Monitor': '🖥️',
+  'Camera': '📷',
+  'Scale': '⚖️',
+  'Calculator': '🧮',
+}
+
 export default function RequestWizard({ categories, initialCategoryName }: RequestWizardProps) {
   const router = useRouter()
   const [step, setStep] = useState<Step>('category')
@@ -141,7 +158,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
               }}
               className="p-4 border rounded-lg hover:border-primary-blue hover:shadow-md transition-all text-center"
             >
-              <div className="text-3xl mb-2">{cat.icon || '🔧'}</div>
+              <div className="text-3xl mb-2">{emojiMap[cat.icon || ''] || '🔧'}</div>
               <div className="font-medium">{cat.name}</div>
             </button>
           ))}
@@ -429,7 +446,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
 
       const code = Math.floor(1000 + Math.random() * 9000).toString()
       setFormData({ ...formData, verificationCode: code })
-      alert(`Your verification code is: ${code}`)
       setVerificationSent(true)
       setStep('verify')
     }
@@ -500,20 +516,25 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     const handleVerify = async () => {
       setVerifying(true)
       setError(null)
-      if (inputCode !== formData.verificationCode) {
-        setError('Invalid code. Please try again.')
-        setVerifying(false)
-        return
-      }
+      try {
+        if (inputCode !== formData.verificationCode) {
+          setError('Invalid code. Please try again.')
+          setVerifying(false)
+          return
+        }
 
-      await handleSubmit()
+        await handleSubmit()
+      } catch (err: any) {
+        console.error('Verification error:', err)
+        setError(err.message || 'Something went wrong')
+        setVerifying(false)
+      }
     }
 
     const handleSubmit = async () => {
       setSubmitting(true)
       setError(null)
       try {
-        // 1. Insert or get client
         let clientId: string | null = null
         const { data: existingClient } = await supabase
           .from('clients')
@@ -539,7 +560,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
           clientId = newClient.id
         }
 
-        // 2. Insert service request (tracking token auto-generated)
         const { data: request, error: requestError } = await supabase
           .from('service_requests')
           .insert({
@@ -560,7 +580,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
 
         if (requestError) throw requestError
 
-        // 3. Insert invitations for selected providers
         const invitations = selectedProviders.map(providerId => ({
           request_id: request.id,
           provider_id: providerId,
@@ -575,7 +594,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
 
         setTrackingToken(request.tracking_token)
         setStep('confirm')
-
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -590,6 +608,13 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
         <p className="text-gray-600 mb-6">
           We sent a 4-digit code to {formData.phone}. Enter it below to complete your request.
         </p>
+
+        {/* Show the verification code on the page */}
+        {formData.verificationCode && (
+          <div className="bg-green-100 border border-green-300 text-green-700 p-3 rounded-lg mb-4">
+            Your verification code is: <strong>{formData.verificationCode}</strong>
+          </div>
+        )}
 
         <div className="space-y-6">
           <div>
@@ -607,7 +632,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
             />
           </div>
 
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+          {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
 
           <div className="flex justify-between">
             <button
