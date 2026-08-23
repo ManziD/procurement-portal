@@ -23,19 +23,20 @@ interface Provider {
 
 interface RequestWizardProps {
   categories: Category[]
+  initialCategoryName?: string
 }
 
-type Step = 
-  | 'category' 
-  | 'description' 
-  | 'location' 
-  | 'providers' 
-  | 'select-providers' 
-  | 'phone' 
-  | 'verify' 
+type Step =
+  | 'category'
+  | 'description'
+  | 'location'
+  | 'providers'
+  | 'select-providers'
+  | 'phone'
+  | 'verify'
   | 'confirm'
 
-export default function RequestWizard({ categories }: RequestWizardProps) {
+export default function RequestWizard({ categories, initialCategoryName }: RequestWizardProps) {
   const router = useRouter()
   const [step, setStep] = useState<Step>('category')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
@@ -65,6 +66,7 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
   const stepOrder: Step[] = ['category', 'description', 'location', 'providers', 'select-providers', 'phone', 'verify', 'confirm']
   const currentStepIndex = stepOrder.indexOf(step)
 
+  // Fetch logged-in user's profile ID
   useEffect(() => {
     const getProfileId = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -79,6 +81,18 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
     }
     getProfileId()
   }, [])
+
+  // Auto-advance when initialCategoryName is provided
+  useEffect(() => {
+    if (initialCategoryName && categories.length > 0) {
+      const found = categories.find((cat) => cat.name === initialCategoryName)
+      if (found) {
+        setSelectedCategoryId(found.id)
+        setSelectedCategoryName(found.name)
+        setStep('description')
+      }
+    }
+  }, [initialCategoryName, categories])
 
   useEffect(() => {
     if (step === 'providers' && selectedCategoryId && formData.division) {
@@ -98,7 +112,7 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
 
       if (error) throw error
 
-      const filtered = (data || []).filter(p => 
+      const filtered = (data || []).filter(p =>
         p.serves_locations && p.serves_locations.includes(formData.division)
       )
 
@@ -539,7 +553,7 @@ export default function RequestWizard({ categories }: RequestWizardProps) {
             timeline: formData.timeline,
             status: 'INVITED',
             profile_id: loggedInProfileId,
-            client_phone: formData.phone, // <-- ADDED
+            client_phone: formData.phone,
           })
           .select('id, tracking_token')
           .single()
