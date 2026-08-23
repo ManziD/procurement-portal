@@ -11,8 +11,6 @@ export default function Footer() {
           <span className="text-gray-600">|</span>
           <a href="#" className="hover:text-accent-orange transition-colors">HELP CENTER</a>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">CONTACT US</a>
-          <span className="text-gray-600">|</span>
           <a href="#" className="hover:text-accent-orange transition-colors">TERMS &amp; CONDITIONS</a>
         </div>
 
@@ -21,11 +19,10 @@ export default function Footer() {
           <a href="#" className="hover:text-accent-orange transition-colors">REPORT A SERVICE</a>
           <span className="text-gray-600">|</span>
           <a href="#" className="hover:text-accent-orange transition-colors">PRIVACY NOTICE</a>
-         
         </div>
 
-        {/* Contact Info */}
-        <div className="mt-6 text-center text-sm space-y-1">
+        {/* Contact Info – left‑aligned everywhere */}
+        <div className="mt-6 text-sm space-y-1 text-left">
           <p>
             <span className="font-medium text-white">Business Name</span>{' '}
             <span className="text-gray-300">ServiceHub Ug</span>
