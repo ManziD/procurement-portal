@@ -5,143 +5,132 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { MessageCircle, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { formatDistanceToNow } from 'date-fns'
+
+interface Conversation {
+  otherUserId: string
+  otherName: string
+  requestId: string
+  lastMessage: string
+  lastMessageTime: string
+}
 
 export default function ProviderInbox() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [invitations, setInvitations] = useState<any[]>([])
-  const [userId, setUserId] = useState<string | null>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([])
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadConversations = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push('/login')
         return
       }
-      setUserId(session.user.id)
 
-      const { data } = await supabase
-        .from('invitations')
+      const { data: messages, error } = await supabase
+        .from('messages')
         .select(`
           id,
-          status,
+          content,
           created_at,
-          updated_at,
-          request:service_requests (
-            id,
-            title,
-            location,
-            division,
-            parish,
-            timeline,
-            status,
-            created_at,
-            client:clients (
-              id,
-              name,
-              phone,
-              is_premium
-            )
-          )
+          sender_id,
+          recipient_id,
+          request_id
         `)
-        .eq('provider_id', session.user.id)
-        .order('updated_at', { ascending: false })
+        .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+        .order('created_at', { ascending: false })
 
-      setInvitations(data || [])
+      if (error) {
+        console.error('Error fetching messages:', error)
+        setLoading(false)
+        return
+      }
+
+      const grouped = new Map<string, Conversation>()
+      for (const msg of messages) {
+        const otherId = msg.sender_id === session.user.id ? msg.recipient_id : msg.sender_id
+        const key = `${otherId}-${msg.request_id}`
+        if (!grouped.has(key)) {
+          let otherName = 'Client'
+          // Try to get client name from clients table
+          const { data: client } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('id', otherId)
+            .single()
+          if (client) {
+            otherName = client.name
+          } else {
+            // Try profiles
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', otherId)
+              .single()
+            if (profile) {
+              otherName = profile.full_name
+            }
+          }
+
+          grouped.set(key, {
+            otherUserId: otherId,
+            otherName,
+            requestId: msg.request_id,
+            lastMessage: msg.content,
+            lastMessageTime: msg.created_at,
+          })
+        }
+      }
+
+      setConversations(Array.from(grouped.values()))
       setLoading(false)
     }
-    loadData()
+
+    loadConversations()
   }, [router])
-
-  const getStatusBadge = (status: string) => {
-    const map: Record<string, { label: string, className: string }> = {
-      'PENDING': { label: 'New', className: 'bg-yellow-500' },
-      'VIEWED': { label: 'Viewed', className: 'bg-blue-500' },
-      'BID_SUBMITTED': { label: 'Bid Sent', className: 'bg-green-500' },
-      'DECLINED': { label: 'Declined', className: 'bg-gray-500' },
-    }
-    return map[status] || { label: status, className: 'bg-gray-500' }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'PENDING': return <Clock className="h-4 w-4" />
-      case 'BID_SUBMITTED': return <CheckCircle className="h-4 w-4" />
-      case 'DECLINED': return <XCircle className="h-4 w-4" />
-      default: return <MessageCircle className="h-4 w-4" />
-    }
-  }
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>
   }
 
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary-blue">Inbox</h1>
-        <div className="text-sm text-gray-500">
-          {invitations.length} conversations
-        </div>
-      </div>
-
-      {invitations.length === 0 ? (
+  if (conversations.length === 0) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
         <Card>
-          <CardContent className="text-center py-12">
-            <div className="text-6xl mb-4">📭</div>
-            <h2 className="text-xl font-semibold text-gray-700">No conversations yet</h2>
-            <p className="text-gray-500 mt-2">
-              When clients invite you to their requests, they'll appear here.
-            </p>
+          <CardContent className="text-center py-8 text-gray-500">
+            No conversations yet. Start messaging your clients.
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-3">
-          {invitations.map((inv) => {
-            const request = inv.request as any
-            const client = request?.client as any
-            const statusInfo = getStatusBadge(inv.status)
+      </div>
+    )
+  }
 
-            return (
-              <Link
-                key={inv.id}
-                href={`/provider/inbox/${request?.id}`}
-                className="block"
-              >
-                <Card className="hover:shadow-md transition-shadow border-l-4 border-l-primary-blue">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="font-semibold truncate">
-                          {request?.title || 'Untitled Request'}
-                        </div>
-                        <Badge className={statusInfo.className}>
-                          {getStatusIcon(inv.status)}
-                          <span className="ml-1">{statusInfo.label}</span>
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        <span className="font-medium">{client?.name || 'Anonymous'}</span>
-                        {' • '}
-                        {request?.location || 'Unknown location'}
-                        {' • '}
-                        {request?.timeline || 'No timeline'}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-400 ml-4 flex-shrink-0">
-                      {new Date(inv.updated_at).toLocaleDateString()}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
-        </div>
-      )}
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
+      <div className="space-y-3">
+        {conversations.map((conv) => (
+          <Link key={`${conv.otherUserId}-${conv.requestId}`} href={`/provider/inbox/${conv.requestId}`} className="block">
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4 flex items-center gap-4">
+                <Avatar>
+                  <AvatarFallback>{conv.otherName.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold">{conv.otherName}</div>
+                  <div className="text-sm text-gray-600 truncate">{conv.lastMessage}</div>
+                </div>
+                <div className="text-xs text-gray-400">
+                  {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: true })}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }
