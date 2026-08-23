@@ -9,13 +9,12 @@ interface CategoryCardProps {
 }
 
 export default function CategoryCard({ category }: CategoryCardProps) {
-  // Get the icon component dynamically
   const iconName = CATEGORY_ICONS[category] || 'Briefcase'
   const IconComponent = (Icons as any)[iconName] || Icons.Briefcase
 
   return (
     <Link
-      href={`/browse?category=${encodeURIComponent(category)}`}
+      href={`/request?category=${encodeURIComponent(category)}`}
       className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 text-center border border-gray-100 hover:border-primary-blue"
     >
       <div className="flex flex-col items-center">
