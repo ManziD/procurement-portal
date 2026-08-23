@@ -1,30 +1,49 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { getCurrentUser } from '@/lib/supabase/client'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, MapPin, MessageCircle } from 'lucide-react'
 
-export default async function ClientInbox() {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
+export default function ClientInbox() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [requests, setRequests] = useState<any[]>([])
+  const [user, setUser] = useState<any>(null)
 
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  useEffect(() => {
+    const loadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+      setUser(session.user)
 
-  const { data: requests } = await supabase
-    .from('service_requests')
-    .select('*')
-    .eq('profile_id', user.id)
-    .in('status', ['AWARDED', 'COMPLETED'])
-    .order('created_at', { ascending: false })
+      const { data } = await supabase
+        .from('service_requests')
+        .select('*')
+        .eq('profile_id', session.user.id)
+        .in('status', ['AWARDED', 'COMPLETED'])
+        .order('created_at', { ascending: false })
+
+      setRequests(data || [])
+      setLoading(false)
+    }
+    loadData()
+  }, [router])
+
+  if (loading) {
+    return <div className="text-center py-8">Loading...</div>
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-primary-blue mb-6">Your Inbox</h1>
-      {!requests || requests.length === 0 ? (
+      {requests.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8 text-gray-500">
             No active conversations. Start a job by accepting a bid.
