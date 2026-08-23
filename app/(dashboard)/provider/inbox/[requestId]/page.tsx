@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, MapPin, Clock } from 'lucide-react'
 import BidForm from './BidForm'
+import Chat from '@/components/Chat'
 
 export default function InboxDetail({ params }: { params: { requestId: string } }) {
   const { requestId } = params
@@ -22,6 +23,7 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
   const [existingBid, setExistingBid] = useState<any>(null)
   const [allBids, setAllBids] = useState<any[]>([])
   const [providerId, setProviderId] = useState<string | null>(null)
+  const [chatProps, setChatProps] = useState<any>(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -105,11 +107,25 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
 
         const { data: allBidsData } = await supabase
           .from('bids')
-          .select('*, provider:service_providers(business_name, is_premium)')
+          .select('*, provider:service_providers(business_name, is_premium, phone)')
           .eq('request_id', requestId)
           .order('created_at', { ascending: false })
 
         setAllBids(allBidsData || [])
+
+        // Set up chat props if the request is awarded or completed
+        if (req.status === 'AWARDED' || req.status === 'COMPLETED') {
+          const acceptedBid = allBidsData?.find(b => b.status === 'ACCEPTED')
+          if (acceptedBid && acceptedBid.provider) {
+            const providerInfo = acceptedBid.provider
+            setChatProps({
+              requestId: requestId,
+              currentUserId: userId,
+              recipientId: req.client?.id || '',
+              recipientName: req.client?.name || 'Client',
+            })
+          }
+        }
 
       } catch (err: any) {
         setError(err.message || 'Something went wrong')
@@ -129,9 +145,11 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
     return <div className="text-center py-8 text-red-600">{error || 'Request not found'}</div>
   }
 
+  // Determine if we should show the client's phone
+  const showClientPhone = isPremium || request.status === 'AWARDED' || request.status === 'COMPLETED'
+
   return (
     <div>
-      {/* Back to Dashboard button - now points to /portal */}
       <button
         onClick={() => router.push('/portal')}
         className="inline-flex items-center text-primary-blue hover:underline mb-4 cursor-pointer"
@@ -171,16 +189,18 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
                 <span className="text-sm font-medium text-gray-500">Client</span>
                 <p className="font-medium">{client?.name || 'Anonymous'}</p>
               </div>
-              {isPremium && client?.phone && (
+              {showClientPhone && client?.phone && (
                 <div>
                   <span className="text-sm font-medium text-gray-500">Phone</span>
                   <p className="font-medium text-primary-blue">{client.phone}</p>
                 </div>
               )}
-              {!isPremium && client?.phone && (
+              {!showClientPhone && client?.phone && (
                 <div>
                   <span className="text-sm font-medium text-gray-500">Phone</span>
-                  <p className="text-gray-400 text-sm">🔒 Upgrade to Premium to see contact details</p>
+                  <p className="text-gray-400 text-sm">
+                    {request.status === 'AWARDED' || request.status === 'COMPLETED' ? 'Contact info available after job is awarded' : '🔒 Upgrade to Premium to see contact details'}
+                  </p>
                 </div>
               )}
             </div>
@@ -261,6 +281,13 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Chat */}
+      {chatProps && (
+        <div className="mt-8">
+          <Chat {...chatProps} />
+        </div>
       )}
     </div>
   )
