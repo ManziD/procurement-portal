@@ -14,7 +14,6 @@ export default async function ClientInbox() {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
-  // Fetch requests where the client is the profile_id and status is AWARDED or COMPLETED
   const { data: requests } = await supabase
     .from('service_requests')
     .select('*')
