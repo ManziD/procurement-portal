@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Send } from 'lucide-react'
 
 interface ChatProps {
@@ -64,13 +63,16 @@ export default function Chat({ requestId, currentUserId, recipientId, recipientN
           content: newMessage.trim(),
         })
 
-      if (error) throw error
+      if (error) {
+        console.error('Insert error:', error)
+        throw error
+      }
       setNewMessage('')
       await fetchMessages()
       scrollToBottom()
     } catch (err: any) {
       console.error('Error sending message:', err)
-      setError('Failed to send message')
+      setError(err.message || 'Failed to send message')
     } finally {
       setSending(false)
     }
@@ -82,7 +84,6 @@ export default function Chat({ requestId, currentUserId, recipientId, recipientN
 
   useEffect(() => {
     fetchMessages()
-    // Optional: set up polling every 5 seconds for new messages (replaces realtime)
     const interval = setInterval(fetchMessages, 5000)
     return () => clearInterval(interval)
   }, [requestId])
@@ -101,12 +102,10 @@ export default function Chat({ requestId, currentUserId, recipientId, recipientN
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      {/* Header */}
       <div className="bg-gray-50 px-4 py-2 border-b font-medium text-sm text-gray-700">
         💬 Chat with {recipientName}
       </div>
 
-      {/* Messages */}
       <div className="h-60 overflow-y-auto p-4 space-y-2 bg-white">
         {messages.length === 0 ? (
           <div className="text-gray-400 text-sm text-center py-4">No messages yet. Say hello!</div>
@@ -128,7 +127,6 @@ export default function Chat({ requestId, currentUserId, recipientId, recipientN
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="border-t p-2 bg-gray-50 flex gap-2">
         <Input
           value={newMessage}
