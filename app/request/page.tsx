@@ -2,11 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import RequestWizard from './components/RequestWizard'
 
-export default async function RequestPage() {
+export default async function RequestPage({
+  searchParams,
+}: {
+  searchParams: { category?: string }
+}) {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
 
-  // Fetch categories
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, icon')
@@ -14,7 +17,10 @@ export default async function RequestPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <RequestWizard categories={categories || []} />
+      <RequestWizard
+        categories={categories || []}
+        initialCategoryName={searchParams.category}
+      />
     </div>
   )
 }
