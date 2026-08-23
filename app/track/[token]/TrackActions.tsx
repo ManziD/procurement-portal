@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 interface TrackActionsProps {
@@ -11,7 +10,6 @@ interface TrackActionsProps {
 }
 
 export default function TrackActions({ bidId, requestId, trackingToken }: TrackActionsProps) {
-  const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
