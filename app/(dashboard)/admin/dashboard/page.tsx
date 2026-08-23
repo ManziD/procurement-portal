@@ -17,34 +17,35 @@ export default function AdminDashboard() {
   })
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const loadStats = async () => {
+      setLoading(true)
       try {
-        // Get total users (from profiles)
+        // 1. Total users (profiles)
         const { count: totalUsers } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
 
-        // Get total providers
+        // 2. Total providers (service_providers)
         const { count: totalProviders } = await supabase
           .from('service_providers')
           .select('*', { count: 'exact', head: true })
 
-        // Get total clients (from clients table, non-auth)
+        // 3. Total clients (clients table)
         const { count: totalClients } = await supabase
           .from('clients')
           .select('*', { count: 'exact', head: true })
 
-        // Get total requests
+        // 4. Total service requests
         const { count: totalRequests } = await supabase
           .from('service_requests')
           .select('*', { count: 'exact', head: true })
 
-        // Get total bids
+        // 5. Total bids
         const { count: totalBids } = await supabase
           .from('bids')
           .select('*', { count: 'exact', head: true })
 
-        // Get pending verifications (providers with is_verified = false)
+        // 6. Pending verifications (providers not verified)
         const { count: pendingVerifications } = await supabase
           .from('service_providers')
           .select('*', { count: 'exact', head: true })
@@ -59,74 +60,31 @@ export default function AdminDashboard() {
           pendingVerifications: pendingVerifications || 0,
         })
       } catch (error) {
-        console.error('Error fetching stats:', error)
+        console.error('Error loading stats:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStats()
+    loadStats()
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
-      </div>
-    )
+    return <div className="text-center py-8">Loading stats...</div>
   }
 
   const statCards = [
-    {
-      title: 'Total Users',
-      value: stats.totalUsers,
-      icon: Users,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-    },
-    {
-      title: 'Service Providers',
-      value: stats.totalProviders,
-      icon: Briefcase,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    {
-      title: 'Clients (non-auth)',
-      value: stats.totalClients,
-      icon: UserCheck,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
-    },
-    {
-      title: 'Service Requests',
-      value: stats.totalRequests,
-      icon: FileText,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50',
-    },
-    {
-      title: 'Total Bids',
-      value: stats.totalBids,
-      icon: DollarSign,
-      color: 'text-yellow-600',
-      bg: 'bg-yellow-50',
-    },
-    {
-      title: 'Pending Verifications',
-      value: stats.pendingVerifications,
-      icon: Clock,
-      color: 'text-red-600',
-      bg: 'bg-red-50',
-    },
+    { title: 'Total Users', value: stats.totalUsers, icon: Users, color: 'bg-blue-500' },
+    { title: 'Providers', value: stats.totalProviders, icon: Briefcase, color: 'bg-green-500' },
+    { title: 'Clients', value: stats.totalClients, icon: UserCheck, color: 'bg-purple-500' },
+    { title: 'Requests', value: stats.totalRequests, icon: FileText, color: 'bg-yellow-500' },
+    { title: 'Bids', value: stats.totalBids, icon: DollarSign, color: 'bg-indigo-500' },
+    { title: 'Pending Verifications', value: stats.pendingVerifications, icon: Clock, color: 'bg-red-500' },
   ]
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary-blue">Admin Dashboard</h1>
-        <p className="text-sm text-gray-500">Overview of platform activity</p>
-      </div>
+      <h1 className="text-2xl font-bold text-primary-blue mb-6">Admin Dashboard</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((stat) => (
@@ -137,8 +95,8 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-500">{stat.title}</p>
                   <p className="text-2xl font-bold">{stat.value}</p>
                 </div>
-                <div className={`p-3 rounded-full ${stat.bg}`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                <div className={`p-3 rounded-full ${stat.color} bg-opacity-10`}>
+                  <stat.icon className={`h-6 w-6 ${stat.color.replace('bg-', 'text-')}`} />
                 </div>
               </div>
             </CardContent>
@@ -146,8 +104,11 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="mt-8 text-sm text-gray-500 text-center">
-        <p>Total platform users: {stats.totalUsers + stats.totalClients} (includes auth & non-auth clients)</p>
+      <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <p className="text-sm text-yellow-700">
+          ⚠️ You have {stats.pendingVerifications} provider{stats.pendingVerifications !== 1 ? 's' : ''} pending verification.
+          <a href="/admin/providers" className="ml-2 text-primary-blue hover:underline">Review now</a>
+        </p>
       </div>
     </div>
   )
