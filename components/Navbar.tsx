@@ -67,14 +67,6 @@ export default function Navbar() {
     return '/portal'
   }
 
-  // Get inbox link based on role
-  const getInboxLink = () => {
-    if (!profile) return '/login'
-    if (profile.role === 'CLIENT') return '/client/inbox'
-    if (profile.role === 'SERVICE_PROVIDER') return '/provider/inbox'
-    return '/login'
-  }
-
   const quickLinks = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Browse Services', href: '/browse', icon: Search },
@@ -120,7 +112,7 @@ export default function Navbar() {
                     Dashboard
                   </Button>
                 </Link>
-                <Link href={getInboxLink()}>
+                <Link href="/inbox">
                   <Button variant="secondary" className="bg-white text-primary-blue hover:bg-gray-100">
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Inbox
@@ -207,9 +199,9 @@ export default function Navbar() {
                   <span>Dashboard</span>
                 </Link>
 
-                {/* Inbox link for both roles */}
+                {/* Inbox link always points to /inbox */}
                 <Link
-                  href={getInboxLink()}
+                  href="/inbox"
                   className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
                   onClick={() => setIsMenuOpen(false)}
                 >
