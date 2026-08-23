@@ -36,7 +36,6 @@ type Step =
   | 'verify'
   | 'confirm'
 
-// Emoji mapping for categories (replaces Lucide icons)
 const emojiMap: Record<string, string> = {
   'Sparkle': '✨',
   'Wrench': '🔧',
@@ -58,7 +57,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
   const [step, setStep] = useState<Step>('category')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>('')
-  
   const [formData, setFormData] = useState({
     description: '',
     timeline: '',
@@ -68,7 +66,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     name: '',
     verificationCode: '',
   })
-
   const [availableProviders, setAvailableProviders] = useState<Provider[]>([])
   const [selectedProviders, setSelectedProviders] = useState<string[]>([])
   const [loadingProviders, setLoadingProviders] = useState(false)
@@ -77,13 +74,14 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
   const [error, setError] = useState<string | null>(null)
   const [verificationSent, setVerificationSent] = useState(false)
   const [clientId, setClientId] = useState<string | null>(null)
-
   const [loggedInProfileId, setLoggedInProfileId] = useState<string | null>(null)
 
-  const stepOrder: Step[] = ['category', 'description', 'location', 'providers', 'select-providers', 'phone', 'verify', 'confirm']
-  const currentStepIndex = stepOrder.indexOf(step)
+  // --- MOVED TO TOP: inputCode and verifying ---
+  const [inputCode, setInputCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
 
-  // Fetch logged-in user's profile ID
+  const stepOrder: Step[] = ['category', 'description', 'location', 'providers', 'select-providers', 'phone', 'verify', 'confirm']
+
   useEffect(() => {
     const getProfileId = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -99,7 +97,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     getProfileId()
   }, [])
 
-  // Auto-advance when initialCategoryName is provided
   useEffect(() => {
     if (initialCategoryName && categories.length > 0) {
       const found = categories.find((cat) => cat.name === initialCategoryName)
@@ -142,7 +139,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     }
   }
 
-  // Step 1: Category selection
+  // Step 1: Category
   if (step === 'category') {
     return (
       <div>
@@ -299,7 +296,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     )
   }
 
-  // Step 4: Show providers
+  // Step 4: Providers
   if (step === 'providers') {
     return (
       <div>
@@ -364,7 +361,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     )
   }
 
-  // Step 5: Select 2–3 providers
+  // Step 5: Select providers
   if (step === 'select-providers') {
     const toggleProvider = (id: string) => {
       setSelectedProviders(prev => {
@@ -431,7 +428,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     )
   }
 
-  // Step 6: Enter phone number
+  // Step 6: Phone
   if (step === 'phone') {
     const handleSendCode = async () => {
       setError(null)
@@ -508,11 +505,8 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     )
   }
 
-  // Step 7: Verify code
+  // Step 7: Verify
   if (step === 'verify') {
-    const [inputCode, setInputCode] = useState('')
-    const [verifying, setVerifying] = useState(false)
-
     const handleVerify = async () => {
       setVerifying(true)
       setError(null)
@@ -609,7 +603,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
           We sent a 4-digit code to {formData.phone}. Enter it below to complete your request.
         </p>
 
-        {/* Show the verification code on the page */}
         {formData.verificationCode && (
           <div className="bg-green-100 border border-green-300 text-green-700 p-3 rounded-lg mb-4">
             Your verification code is: <strong>{formData.verificationCode}</strong>
@@ -654,7 +647,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     )
   }
 
-  // Step 8: Confirmation
+  // Step 8: Confirm
   if (step === 'confirm') {
     const trackingUrl = `${window.location.origin}/track/${trackingToken}`
 
