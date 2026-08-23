@@ -20,18 +20,15 @@ export default function Footer() {
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm mt-2">
           <a href="#" className="hover:text-accent-orange transition-colors">REPORT A SERVICE</a>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">RETURN &amp; REFUND POLICY</a>
-          <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">PRIVACY POLICY NOTICE</a>
-          <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">COOKIE NOTICE</a>
+          <a href="#" className="hover:text-accent-orange transition-colors">PRIVACY NOTICE</a>
+         
         </div>
 
         {/* Contact Info */}
         <div className="mt-6 text-center text-sm space-y-1">
           <p>
             <span className="font-medium text-white">Business Name</span>{' '}
-            <span className="text-gray-300">SERVICEHUB UG</span>
+            <span className="text-gray-300">ServiceHub Ug</span>
           </p>
           <p>
             <span className="font-medium text-white">Address</span>{' '}
