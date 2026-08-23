@@ -35,8 +35,7 @@ export default function TrackActions({ bidId, requestId, trackingToken }: TrackA
         throw new Error(data.error || `Failed to ${action} bid`)
       }
 
-      // Refresh the page to show updated status
-      router.refresh()
+      window.location.reload()
     } catch (err: any) {
       setError(err.message)
       setLoading(null)
