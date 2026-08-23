@@ -1,50 +1,61 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { getCurrentUser } from '@/lib/supabase/client'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MessageCircle, Clock, CheckCircle, XCircle } from 'lucide-react'
 
-export default async function ProviderInbox() {
-  const user = await getCurrentUser()
-  if (!user) redirect('/login')
+export default function ProviderInbox() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [invitations, setInvitations] = useState<any[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
 
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  useEffect(() => {
+    const loadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+      setUserId(session.user.id)
 
-  const { data: invitations, error } = await supabase
-    .from('invitations')
-    .select(`
-      id,
-      status,
-      created_at,
-      updated_at,
-      request:service_requests (
-        id,
-        title,
-        location,
-        division,
-        parish,
-        timeline,
-        status,
-        created_at,
-        client:clients (
+      const { data } = await supabase
+        .from('invitations')
+        .select(`
           id,
-          name,
-          phone,
-          is_premium
-        )
-      )
-    `)
-    .eq('provider_id', user.id)
-    .order('updated_at', { ascending: false })
+          status,
+          created_at,
+          updated_at,
+          request:service_requests (
+            id,
+            title,
+            location,
+            division,
+            parish,
+            timeline,
+            status,
+            created_at,
+            client:clients (
+              id,
+              name,
+              phone,
+              is_premium
+            )
+          )
+        `)
+        .eq('provider_id', session.user.id)
+        .order('updated_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching inbox:', error)
-  }
+      setInvitations(data || [])
+      setLoading(false)
+    }
+    loadData()
+  }, [router])
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, { label: string, className: string }> = {
@@ -65,16 +76,20 @@ export default async function ProviderInbox() {
     }
   }
 
+  if (loading) {
+    return <div className="text-center py-8">Loading...</div>
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-primary-blue">Inbox</h1>
         <div className="text-sm text-gray-500">
-          {invitations?.length || 0} conversations
+          {invitations.length} conversations
         </div>
       </div>
 
-      {!invitations || invitations.length === 0 ? (
+      {invitations.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <div className="text-6xl mb-4">📭</div>
