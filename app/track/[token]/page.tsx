@@ -1,69 +1,108 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { notFound } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2, ChevronDown } from 'lucide-react'
 import Chat from '@/components/Chat'
 import TrackActions from './TrackActions'
-import { getCurrentUser } from '@/lib/supabase/client'
 
-export default async function TrackTokenPage({ params }: { params: { token: string } }) {
+export default function TrackTokenPage({ params }: { params: { token: string } }) {
   const { token } = params
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [request, setRequest] = useState<any>(null)
+  const [bids, setBids] = useState<any[]>([])
+  const [user, setUser] = useState<any>(null)
+  const [chatProps, setChatProps] = useState<any>(null)
+  const [showChat, setShowChat] = useState(false)
 
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true)
+      setError(null)
 
-  const { data: request, error: requestError } = await supabase
-    .from('service_requests')
-    .select('*')
-    .eq('tracking_token', token)
-    .single()
+      try {
+        // 1. Get session client‑side
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user || null)
 
-  if (requestError || !request) {
-    notFound()
-  }
+        // 2. Fetch request
+        const { data: requestData, error: requestError } = await supabase
+          .from('service_requests')
+          .select('*')
+          .eq('tracking_token', token)
+          .single()
 
-  const { data: bids } = await supabase
-    .from('bids')
-    .select(`
-      id,
-      price,
-      timeline,
-      message,
-      status,
-      created_at,
-      provider:service_providers (
-        id,
-        business_name,
-        rating,
-        phone
-      )
-    `)
-    .eq('request_id', request.id)
-    .order('created_at', { ascending: false })
-
-  const user = await getCurrentUser()
-  let chatProps = null
-  let showChat = false
-
-  // Check if user is logged in and request is awarded/completed
-  if (user) {
-    if (request.status === 'AWARDED' || request.status === 'COMPLETED') {
-      const acceptedBid = bids?.find(b => b.status === 'ACCEPTED')
-      if (acceptedBid && acceptedBid.provider) {
-        const provider = acceptedBid.provider as any
-        chatProps = {
-          requestId: request.id,
-          currentUserId: user.id,
-          recipientId: provider.id,
-          recipientName: provider.business_name || 'Provider',
+        if (requestError || !requestData) {
+          setError('Request not found')
+          setLoading(false)
+          return
         }
-        showChat = true
+        setRequest(requestData)
+
+        // 3. Fetch bids
+        const { data: bidsData } = await supabase
+          .from('bids')
+          .select(`
+            id,
+            price,
+            timeline,
+            message,
+            status,
+            created_at,
+            provider:service_providers (
+              id,
+              business_name,
+              rating,
+              phone
+            )
+          `)
+          .eq('request_id', requestData.id)
+          .order('created_at', { ascending: false })
+
+        setBids(bidsData || [])
+
+        // 4. Check if chat should be shown
+        const currentUser = session?.user
+        if (currentUser) {
+          const isAwardedOrCompleted = requestData.status === 'AWARDED' || requestData.status === 'COMPLETED'
+          if (isAwardedOrCompleted) {
+            const acceptedBid = bidsData?.find(b => b.status === 'ACCEPTED')
+            if (acceptedBid && acceptedBid.provider) {
+              const provider = acceptedBid.provider as any
+              setChatProps({
+                requestId: requestData.id,
+                currentUserId: currentUser.id,
+                recipientId: provider.id,
+                recipientName: provider.business_name || 'Provider',
+              })
+              setShowChat(true)
+            }
+          }
+        }
+
+        setLoading(false)
+      } catch (err: any) {
+        setError(err.message || 'Something went wrong')
+        setLoading(false)
       }
     }
+
+    loadData()
+  }, [token])
+
+  if (loading) {
+    return <div className="text-center py-8">Loading...</div>
+  }
+
+  if (error || !request) {
+    return <div className="text-center py-8 text-red-600">{error || 'Request not found'}</div>
   }
 
   const showProviderPhone = request.status === 'AWARDED' || request.status === 'COMPLETED'
@@ -122,12 +161,10 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      {/* Back to Inbox button */}
       <Link href="/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
         ← Back to Inbox
       </Link>
 
-      {/* Status Banner */}
       <div className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
         request.status === 'COMPLETED' ? 'bg-green-50 border border-green-200' :
         request.status === 'AWARDED' ? 'bg-blue-50 border border-blue-200' :
@@ -139,7 +176,6 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
       </div>
 
-      {/* CHAT - PRIMARY VIEW when awarded/completed */}
       {showChat && chatProps && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">💬 Conversation</h2>
@@ -147,7 +183,6 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         </div>
       )}
 
-      {/* Request Details - collapsed when chat is shown */}
       <details className={`mb-6 border rounded-lg p-4 ${showChat ? 'bg-gray-50' : ''}`}>
         <summary className="cursor-pointer font-medium text-gray-700 flex items-center gap-2">
           <span>📋 Request Details</span>
@@ -169,11 +204,10 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         </div>
       </details>
 
-      {/* Bids section - hidden when chat is shown (since the job is awarded/completed) */}
       {!showChat && (
         <>
-          <h2 className="text-xl font-semibold text-primary-blue mb-4">Bids ({bids?.length || 0})</h2>
-          {!bids || bids.length === 0 ? (
+          <h2 className="text-xl font-semibold text-primary-blue mb-4">Bids ({bids.length})</h2>
+          {bids.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8 text-gray-500">
                 No bids submitted yet. Check back later.
@@ -226,7 +260,6 @@ export default async function TrackTokenPage({ params }: { params: { token: stri
         </>
       )}
 
-      {/* Mark as Completed Button (only if awarded and not completed) */}
       {canMarkComplete && (
         <div className="mt-8 flex justify-center">
           <form action="/api/track/complete-request" method="POST">
