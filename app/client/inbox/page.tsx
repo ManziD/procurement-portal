@@ -4,78 +4,158 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Calendar, MapPin, MessageCircle } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { formatDistanceToNow } from 'date-fns'
+
+interface Conversation {
+  otherUserId: string
+  otherName: string
+  requestId: string
+  trackingToken: string
+  lastMessage: string
+  lastMessageTime: string
+}
 
 export default function ClientInbox() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [requests, setRequests] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([])
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadConversations = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push('/login')
         return
       }
-      setUser(session.user)
 
-      const { data } = await supabase
-        .from('service_requests')
-        .select('*')
-        .eq('profile_id', session.user.id)
-        .in('status', ['AWARDED', 'COMPLETED'])
+      // Fetch all messages where user is sender or recipient
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select(`
+          id,
+          content,
+          created_at,
+          sender_id,
+          recipient_id,
+          request_id,
+          request:service_requests (
+            tracking_token,
+            status
+          )
+        `)
+        .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false })
 
-      setRequests(data || [])
+      if (error) {
+        console.error('Error fetching messages:', error)
+        setLoading(false)
+        return
+      }
+
+      // Group by other party and request
+      const grouped = new Map<string, Conversation>()
+      for (const msg of messages) {
+        const otherId = msg.sender_id === session.user.id ? msg.recipient_id : msg.sender_id
+        const request = msg.request as any
+        if (!request || (request.status !== 'AWARDED' && request.status !== 'COMPLETED')) continue
+
+        const key = `${otherId}-${msg.request_id}`
+        if (!grouped.has(key)) {
+          // Fetch other user's name (could be provider or client)
+          let otherName = 'Unknown'
+          // Check if other is a provider
+          const { data: provider } = await supabase
+            .from('service_providers')
+            .select('business_name')
+            .eq('id', otherId)
+            .single()
+          if (provider) {
+            otherName = provider.business_name
+          } else {
+            // Check if other is a client (from clients table)
+            const { data: client } = await supabase
+              .from('clients')
+              .select('name')
+              .eq('id', otherId)
+              .single()
+            if (client) {
+              otherName = client.name
+            } else {
+              // Try profiles
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', otherId)
+                .single()
+              if (profile) {
+                otherName = profile.full_name
+              }
+            }
+          }
+
+          grouped.set(key, {
+            otherUserId: otherId,
+            otherName,
+            requestId: msg.request_id,
+            trackingToken: request.tracking_token,
+            lastMessage: msg.content,
+            lastMessageTime: msg.created_at,
+          })
+        } else {
+          // Update only if this message is newer (already ordered, so first is latest)
+          // Since we ordered by created_at desc, the first message for each group is the latest.
+        }
+      }
+
+      setConversations(Array.from(grouped.values()))
       setLoading(false)
     }
-    loadData()
+
+    loadConversations()
   }, [router])
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>
   }
 
+  if (conversations.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <h1 className="text-2xl font-bold text-primary-blue mb-6">Your Inbox</h1>
+        <Card>
+          <CardContent className="text-center py-8 text-gray-500">
+            No conversations yet. Start a job and message your provider.
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-primary-blue mb-6">Your Inbox</h1>
-      {requests.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-8 text-gray-500">
-            No active conversations. Start a job by accepting a bid.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {requests.map((req) => (
-            <Link key={req.id} href={`/track/${req.tracking_token}`} className="block">
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold">{req.title}</div>
-                    <div className="text-sm text-gray-600 flex items-center gap-2">
-                      <MapPin className="h-4 w-4" /> {req.location}
-                    </div>
-                    <div className="text-xs text-gray-400 flex items-center gap-2 mt-1">
-                      <Calendar className="h-3 w-3" /> {new Date(req.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className={req.status === 'AWARDED' ? 'bg-green-500' : 'bg-gray-500'}>
-                      {req.status}
-                    </Badge>
-                    <MessageCircle className="h-5 w-5 text-primary-blue" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+      <div className="space-y-3">
+        {conversations.map((conv) => (
+          <Link key={`${conv.otherUserId}-${conv.requestId}`} href={`/track/${conv.trackingToken}`} className="block">
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4 flex items-center gap-4">
+                <Avatar>
+                  <AvatarFallback>{conv.otherName.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold">{conv.otherName}</div>
+                  <div className="text-sm text-gray-600 truncate">{conv.lastMessage}</div>
+                </div>
+                <div className="text-xs text-gray-400">
+                  {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: true })}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }
