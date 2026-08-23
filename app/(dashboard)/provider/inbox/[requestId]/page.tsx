@@ -58,6 +58,7 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
               budget_range,
               status,
               created_at,
+              profile_id,
               client:clients (
                 id,
                 name,
@@ -113,15 +114,15 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
 
         setAllBids(allBidsData || [])
 
-        // Set up chat props if the request is awarded or completed
-        if (req.status === 'AWARDED' || req.status === 'COMPLETED') {
+        // Set up chat props if the request is awarded or completed and the client has a profile_id
+        if ((req.status === 'AWARDED' || req.status === 'COMPLETED') && req.profile_id) {
           const acceptedBid = allBidsData?.find(b => b.status === 'ACCEPTED')
           if (acceptedBid && acceptedBid.provider) {
             const providerInfo = acceptedBid.provider
             setChatProps({
               requestId: requestId,
               currentUserId: userId,
-              recipientId: req.client?.id || '',
+              recipientId: req.profile_id, // Use profile_id, not client.id
               recipientName: req.client?.name || 'Client',
             })
           }
