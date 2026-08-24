@@ -32,11 +32,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Hide navbar on admin pages
-  if (pathname?.startsWith('/admin')) {
-    return null
-  }
-
+  // All hooks are called first, in the same order every time.
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -85,6 +81,11 @@ export default function Navbar() {
     { name: 'Browse Services', href: '/browse', icon: Search },
     { name: 'About Us', href: '/about', icon: Info },
   ]
+
+  // Hide navbar on admin pages – but only after all hooks have been called.
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
 
   return (
     <nav className="bg-primary-blue text-white sticky top-0 z-50 shadow-lg">
