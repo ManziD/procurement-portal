@@ -236,7 +236,7 @@ export default function Navbar() {
 
                 {profile?.role === 'CLIENT' && (
                   <Link
-                    href="/client/request"
+                    href="/browse"
                     className="flex items-center space-x-3 text-white hover:text-accent-orange transition-colors py-2 border-b border-white/10"
                     onClick={() => setIsMenuOpen(false)}
                   >
