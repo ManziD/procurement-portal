@@ -8,8 +8,8 @@ import Footer from '@/components/Footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Procurement Portal - Kampala B2B Services',
-  description: 'Private Business Procurement Portal for Kampala, Uganda',
+  title: 'ServiceHub-Ug – Find Services in Kampala',
+  description: 'Connecting businesses with trusted service providers in Kampala, Uganda.',
 }
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
         <ThemeProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-grow">{children}</main>
+            <main className="flex-1">{children}</main>
             <Footer />
           </div>
         </ThemeProvider>
