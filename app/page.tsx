@@ -1,12 +1,8 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { PlusCircle } from 'lucide-react'
 import HeroBanner from '@/components/HeroBanner'
 import CategoryCard from '@/components/CategoryCard'
 import ServiceCard from '@/components/ServiceCard'
 import { CATEGORIES } from '@/lib/constants'
 
-// Sample featured services – replace with real data later
 const featuredServices = [
   {
     id: '1',
@@ -33,7 +29,6 @@ const featuredServices = [
 export default function Home() {
   return (
     <>
-      {/* Organization Schema – JSON‑LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -70,22 +65,7 @@ export default function Home() {
       <div>
         <HeroBanner />
 
-        {/* Quick Action: Post a Request */}
-        <section className="container mx-auto px-4 py-6">
-          <div className="bg-primary-blue/10 rounded-xl p-6 text-center border-2 border-dashed border-primary-blue">
-            <h2 className="text-xl font-semibold text-primary-blue">Need a service?</h2>
-            <p className="text-gray-600 text-sm mt-1">Post a request and get bids from trusted providers</p>
-            <Link href="/browse">
-              <Button className="mt-3 bg-accent-orange hover:bg-opacity-90 text-white">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Post a Request
-              </Button>
-            </Link>
-          </div>
-        </section>
-
-        {/* Categories */}
-        <section className="container mx-auto px-4 py-6">
+        <section className="container mx-auto px-4 py-12">
           <h2 className="text-2xl font-bold text-primary-blue mb-6">
             Browse Services by Category
           </h2>
@@ -96,7 +76,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Services */}
         <section className="bg-gray-50 py-12">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center mb-6">
