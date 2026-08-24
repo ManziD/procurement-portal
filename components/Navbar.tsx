@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabase, getCurrentUser, getCurrentProfile } from '@/lib/supabase/client'
 import {
   Search,
@@ -25,11 +25,17 @@ import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 export default function Navbar() {
+  const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const router = useRouter()
+
+  // Hide navbar on admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
