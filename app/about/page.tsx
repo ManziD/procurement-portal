@@ -191,7 +191,7 @@ export default function AboutPage() {
           </p>
 
           <p>
-            We are starting with a focused approach: build a useful platform, establish trust between clients and providers, listen to our users, and continuously improve the experience.
+            We started with a focused approach: build a useful platform, establish trust between clients and providers, listen to our users, and continuously improve the experience.
           </p>
 
           <p>
