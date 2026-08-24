@@ -1,26 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import RequestWizard from './components/RequestWizard'
+import { redirect } from 'next/navigation'
 
-export default async function RequestPage({
-  searchParams,
-}: {
-  searchParams: { category?: string }
-}) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
-
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name, icon')
-    .order('name')
-
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <RequestWizard
-        categories={categories || []}
-        initialCategoryName={searchParams.category}
-      />
-    </div>
-  )
+export default function RequestPage() {
+  redirect('/browse')
 }
