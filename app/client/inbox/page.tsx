@@ -30,7 +30,6 @@ export default function ClientInbox() {
         return
       }
 
-      // Fetch all messages where user is sender or recipient
       const { data: messages, error } = await supabase
         .from('messages')
         .select(`
@@ -54,27 +53,30 @@ export default function ClientInbox() {
         return
       }
 
-      // Group by other party and request
       const grouped = new Map<string, Conversation>()
+
       for (const msg of messages) {
         const otherId = msg.sender_id === session.user.id ? msg.recipient_id : msg.sender_id
         const request = msg.request as any
+
         if (!request || (request.status !== 'AWARDED' && request.status !== 'COMPLETED')) continue
 
         const key = `${otherId}-${msg.request_id}`
+
         if (!grouped.has(key)) {
-          // Fetch other user's name (could be provider or client)
           let otherName = 'Unknown'
-          // Check if other is a provider
+
+          // Try provider first
           const { data: provider } = await supabase
             .from('service_providers')
             .select('business_name')
             .eq('id', otherId)
             .single()
+
           if (provider) {
             otherName = provider.business_name
           } else {
-            // Check if other is a client (from clients table)
+            // Try clients table
             const { data: client } = await supabase
               .from('clients')
               .select('name')
@@ -103,9 +105,6 @@ export default function ClientInbox() {
             lastMessage: msg.content,
             lastMessageTime: msg.created_at,
           })
-        } else {
-          // Update only if this message is newer (already ordered, so first is latest)
-          // Since we ordered by created_at desc, the first message for each group is the latest.
         }
       }
 
@@ -122,7 +121,7 @@ export default function ClientInbox() {
 
   if (conversations.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-bold text-primary-blue mb-6">Your Inbox</h1>
         <Card>
           <CardContent className="text-center py-8 text-gray-500">
@@ -134,21 +133,27 @@ export default function ClientInbox() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
       <h1 className="text-2xl font-bold text-primary-blue mb-6">Your Inbox</h1>
       <div className="space-y-3">
         {conversations.map((conv) => (
-          <Link key={`${conv.otherUserId}-${conv.requestId}`} href={`/track/${conv.trackingToken}`} className="block">
+          <Link
+            key={`${conv.otherUserId}-${conv.requestId}`}
+            href={`/track/${conv.trackingToken}`}
+            className="block"
+          >
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
-                <Avatar>
-                  <AvatarFallback>{conv.otherName.charAt(0).toUpperCase()}</AvatarFallback>
+                <Avatar className="h-10 w-10 bg-primary-blue/10">
+                  <AvatarFallback className="text-primary-blue">
+                    {conv.otherName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold">{conv.otherName}</div>
                   <div className="text-sm text-gray-600 truncate">{conv.lastMessage}</div>
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-gray-400 whitespace-nowrap">
                   {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: true })}
                 </div>
               </CardContent>
