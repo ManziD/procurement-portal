@@ -27,7 +27,7 @@ export default function HeroBanner() {
                 </Button>
               </Link>
               <Link href="/browse">
-                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-primary-blue text-lg px-8 py-6">
+                <Button variant="outline" className="border-white bg-transparent text-white hover:bg-white hover:text-primary-blue text-lg px-8 py-6">
                   Browse Services
                 </Button>
               </Link>
