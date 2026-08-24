@@ -36,22 +36,6 @@ type Step =
   | 'verify'
   | 'confirm'
 
-const emojiMap: Record<string, string> = {
-  'Sparkle': '✨',
-  'Wrench': '🔧',
-  'Zap': '⚡',
-  'Globe': '🌐',
-  'Palette': '🎨',
-  'GraduationCap': '🎓',
-  'Utensils': '🍽️',
-  'Shield': '🛡️',
-  'HardHat': '⛑️',
-  'Monitor': '🖥️',
-  'Camera': '📷',
-  'Scale': '⚖️',
-  'Calculator': '🧮',
-}
-
 export default function RequestWizard({ categories, initialCategoryName }: RequestWizardProps) {
   const router = useRouter()
   const [step, setStep] = useState<Step>('category')
@@ -75,8 +59,6 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
   const [verificationSent, setVerificationSent] = useState(false)
   const [clientId, setClientId] = useState<string | null>(null)
   const [loggedInProfileId, setLoggedInProfileId] = useState<string | null>(null)
-
-  // --- MOVED TO TOP: inputCode and verifying ---
   const [inputCode, setInputCode] = useState('')
   const [verifying, setVerifying] = useState(false)
 
@@ -97,13 +79,14 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     getProfileId()
   }, [])
 
+  // Auto-advance when initialCategoryName is provided – skip category grid
   useEffect(() => {
     if (initialCategoryName && categories.length > 0) {
       const found = categories.find((cat) => cat.name === initialCategoryName)
       if (found) {
         setSelectedCategoryId(found.id)
         setSelectedCategoryName(found.name)
-        setStep('description')
+        setStep('location')
       }
     }
   }, [initialCategoryName, categories])
@@ -139,7 +122,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     }
   }
 
-  // Step 1: Category
+  // Step 1: Category selection – clean, no icons
   if (step === 'category') {
     return (
       <div>
@@ -153,10 +136,9 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
                 setSelectedCategoryName(cat.name)
                 setStep('description')
               }}
-              className="p-4 border rounded-lg hover:border-primary-blue hover:shadow-md transition-all text-center"
+              className="p-4 border rounded-lg hover:border-primary-blue hover:shadow-md transition-all text-center bg-white"
             >
-              <div className="text-3xl mb-2">{emojiMap[cat.icon || ''] || '🔧'}</div>
-              <div className="font-medium">{cat.name}</div>
+              <span className="font-medium">{cat.name}</span>
             </button>
           ))}
         </div>
