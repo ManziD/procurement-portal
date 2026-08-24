@@ -49,21 +49,23 @@ export default function ProviderInbox() {
       }
 
       const grouped = new Map<string, Conversation>()
+
       for (const msg of messages) {
         const otherId = msg.sender_id === session.user.id ? msg.recipient_id : msg.sender_id
         const key = `${otherId}-${msg.request_id}`
+
         if (!grouped.has(key)) {
           let otherName = 'Client'
-          // Try to get client name from clients table
+
           const { data: client } = await supabase
             .from('clients')
             .select('name')
             .eq('id', otherId)
             .single()
+
           if (client) {
             otherName = client.name
           } else {
-            // Try profiles
             const { data: profile } = await supabase
               .from('profiles')
               .select('full_name')
@@ -97,7 +99,7 @@ export default function ProviderInbox() {
 
   if (conversations.length === 0) {
     return (
-      <div>
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
         <Card>
           <CardContent className="text-center py-8 text-gray-500">
@@ -109,21 +111,27 @@ export default function ProviderInbox() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
       <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
       <div className="space-y-3">
         {conversations.map((conv) => (
-          <Link key={`${conv.otherUserId}-${conv.requestId}`} href={`/provider/inbox/${conv.requestId}`} className="block">
+          <Link
+            key={`${conv.otherUserId}-${conv.requestId}`}
+            href={`/provider/inbox/${conv.requestId}`}
+            className="block"
+          >
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
-                <Avatar>
-                  <AvatarFallback>{conv.otherName.charAt(0).toUpperCase()}</AvatarFallback>
+                <Avatar className="h-10 w-10 bg-primary-blue/10">
+                  <AvatarFallback className="text-primary-blue">
+                    {conv.otherName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold">{conv.otherName}</div>
                   <div className="text-sm text-gray-600 truncate">{conv.lastMessage}</div>
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-gray-400 whitespace-nowrap">
                   {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: true })}
                 </div>
               </CardContent>
