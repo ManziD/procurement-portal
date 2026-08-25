@@ -161,7 +161,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe the service you need in detail..."
-              className="w-full border rounded-lg px-4 py-3 h-32 focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              className="w-full border rounded-lg px-4 py-3 h-32 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue"
             />
           </div>
 
@@ -173,7 +173,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
               id="timeline"
               value={formData.timeline}
               onChange={(e) => setFormData({ ...formData, timeline: e.target.value })}
-              className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              className="w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue"
             >
               <option value="">Select timeline</option>
               <option value="ASAP">ASAP</option>
@@ -229,7 +229,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
                   parish: '',
                 })
               }}
-              className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              className="w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue"
             >
               <option value="">Select division</option>
               {divisions.map((div) => (
@@ -247,7 +247,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
               value={formData.parish}
               onChange={(e) => setFormData({ ...formData, parish: e.target.value })}
               disabled={!formData.division}
-              className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               <option value="">
                 {formData.division ? 'Select parish' : 'Select division first'}
@@ -447,7 +447,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., John Doe"
-              className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              className="w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue"
             />
           </div>
 
@@ -461,7 +461,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="e.g., 0750123456"
-              className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              className="w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue"
             />
           </div>
 
@@ -603,7 +603,7 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
               value={inputCode}
               onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ''))}
               placeholder="e.g., 1234"
-              className="w-full border rounded-lg px-4 py-3 text-center text-2xl tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              className="w-full border rounded-lg px-4 py-3 text-center text-2xl tracking-widest bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-blue"
             />
           </div>
 
