@@ -105,7 +105,7 @@ export default function Navbar() {
                 placeholder="Search for services..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 rounded-l-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-orange"
+                className="w-full px-4 py-2 rounded-l-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-orange"
               />
               <button
                 type="submit"
@@ -180,7 +180,7 @@ export default function Navbar() {
               placeholder="Search for services..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-orange"
+              className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-orange"
             />
             <button
               type="submit"
