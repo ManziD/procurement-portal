@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { createPublicClient } from '@/lib/supabase/public'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -13,13 +12,13 @@ interface Question {
 }
 
 export async function generateStaticParams() {
-  const supabase = createClient(cookies())
+  const supabase = createPublicClient()
   const { data } = await supabase.from('questions').select('slug')
   return (data || []).map((q) => ({ slug: q.slug }))
 }
 
 async function getQuestion(slug: string): Promise<Question | null> {
-  const supabase = createClient(cookies())
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('questions')
     .select('slug, question, answer, categories(id, name)')
