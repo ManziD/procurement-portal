@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { createPublicClient } from '@/lib/supabase/public'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -20,13 +19,13 @@ function slugifyCategory(name: string) {
 }
 
 export async function generateStaticParams() {
-  const supabase = createClient(cookies())
+  const supabase = createPublicClient()
   const { data } = await supabase.from('categories').select('name')
   return (data || []).map((c) => ({ category: slugifyCategory(c.name) }))
 }
 
 async function getCategoryData(categorySlug: string) {
-  const supabase = createClient(cookies())
+  const supabase = createPublicClient()
 
   const { data: categories } = await supabase.from('categories').select('id, name')
   const category = (categories || []).find(
