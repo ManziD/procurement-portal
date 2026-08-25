@@ -24,6 +24,7 @@ interface Provider {
 interface RequestWizardProps {
   categories: Category[]
   initialCategoryName?: string
+  unmatchedSearchQuery?: string
 }
 
 type Step =
@@ -36,7 +37,7 @@ type Step =
   | 'verify'
   | 'confirm'
 
-export default function RequestWizard({ categories, initialCategoryName }: RequestWizardProps) {
+export default function RequestWizard({ categories, initialCategoryName, unmatchedSearchQuery }: RequestWizardProps) {
   const router = useRouter()
   const [step, setStep] = useState<Step>('category')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
@@ -127,6 +128,11 @@ export default function RequestWizard({ categories, initialCategoryName }: Reque
     return (
       <div>
         <h1 className="text-2xl font-bold text-primary-blue mb-6">What service do you need?</h1>
+        {unmatchedSearchQuery && (
+          <p className="text-sm text-gray-600 mb-4">
+            No exact match for &ldquo;{unmatchedSearchQuery}&rdquo; &mdash; choose the closest category below.
+          </p>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {categories.map((cat) => (
             <button
