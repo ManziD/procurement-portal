@@ -7,6 +7,8 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-8">
         {/* Links Row 1 */}
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+          <Link href="/faq" className="hover:text-accent-orange transition-colors">FAQ</Link>
+          <span className="text-gray-600">|</span>
           <a href="#" className="hover:text-accent-orange transition-colors">CHAT WITH US</a>
           <span className="text-gray-600">|</span>
           <a href="#" className="hover:text-accent-orange transition-colors">HELP CENTER</a>
