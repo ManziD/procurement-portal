@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { createPublicClient } from '@/lib/supabase/public'
 import Link from 'next/link'
 
 export const revalidate = 3600
@@ -21,7 +20,7 @@ function slugifyCategory(name: string) {
 }
 
 export default async function FaqIndexPage() {
-  const supabase = createClient(cookies())
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('questions')
     .select('slug, question, categories(name)')
