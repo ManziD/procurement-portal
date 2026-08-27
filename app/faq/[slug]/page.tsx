@@ -54,6 +54,15 @@ export default async function FaqSlugPage({ params }: { params: { slug: string }
       )}
       <h1 className="text-3xl font-bold mt-3 mb-6">{data.question}</h1>
       <MarkdownLite markdown={data.answer_md} />
+
+      {data.categories && (
+        <Link
+          href={`/browse?category=${encodeURIComponent(data.categories.name)}`}
+          className="inline-block mt-8 px-6 py-2 bg-accent-orange text-white rounded-lg hover:bg-opacity-90 transition-colors"
+        >
+          Request a {data.categories.name} provider
+        </Link>
+      )}
     </article>
   )
 }
