@@ -43,11 +43,14 @@ export default async function FaqIndexPage() {
               {categoryName}
             </Link>
           </h2>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {items.map((q) => (
               <li key={q.slug}>
-                <Link href={`/faq/${q.slug}`} className="hover:underline">
-                  {q.question}
+                <Link
+                  href={`/faq/${q.slug}`}
+                  className="block p-4 border rounded-lg hover:border-primary-blue hover:shadow-md transition-all"
+                >
+                  <span className="font-medium">{q.question}</span>
                 </Link>
               </li>
             ))}
