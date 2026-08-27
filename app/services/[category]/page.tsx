@@ -4,43 +4,35 @@ import { notFound } from 'next/navigation'
 
 export const revalidate = 3600
 
-interface Category {
-  id: string
-  name: string
-}
-
-interface QuestionSummary {
+interface FaqSummary {
   slug: string
   question: string
 }
 
-function slugifyCategory(name: string) {
-  return name.toLowerCase().replace(/\s+/g, '-')
-}
-
 export async function generateStaticParams() {
   const supabase = createPublicClient()
-  const { data } = await supabase.from('categories').select('name')
-  return (data || []).map((c) => ({ category: slugifyCategory(c.name) }))
+  const { data } = await supabase.from('categories').select('slug')
+  return (data || []).map((c) => ({ category: c.slug }))
 }
 
 async function getCategoryData(categorySlug: string) {
   const supabase = createPublicClient()
 
-  const { data: categories } = await supabase.from('categories').select('id, name')
-  const category = (categories || []).find(
-    (c) => slugifyCategory(c.name) === categorySlug
-  ) as Category | undefined
+  const { data: category } = await supabase
+    .from('categories')
+    .select('id, name, slug')
+    .eq('slug', categorySlug)
+    .single()
 
   if (!category) return null
 
-  const { data: questions } = await supabase
-    .from('questions')
+  const { data: faqs } = await supabase
+    .from('faqs')
     .select('slug, question')
     .eq('category_id', category.id)
     .order('created_at')
 
-  return { category, questions: (questions || []) as QuestionSummary[] }
+  return { category, faqs: (faqs || []) as FaqSummary[] }
 }
 
 export async function generateMetadata({ params }: { params: { category: string } }) {
@@ -60,7 +52,7 @@ export default async function CategoryHubPage({
   const data = await getCategoryData(params.category)
   if (!data) notFound()
 
-  const { category, questions } = data
+  const { category, faqs } = data
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-3xl">
@@ -77,9 +69,9 @@ export default async function CategoryHubPage({
         Request a {category.name} provider
       </Link>
 
-      {questions.length > 0 ? (
+      {faqs.length > 0 ? (
         <ul className="space-y-3">
-          {questions.map((q) => (
+          {faqs.map((q) => (
             <li key={q.slug}>
               <Link
                 href={`/faq/${q.slug}`}
