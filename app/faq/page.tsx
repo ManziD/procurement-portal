@@ -3,10 +3,10 @@ import Link from 'next/link'
 
 export const revalidate = 3600
 
-interface Question {
+interface Faq {
   slug: string
   question: string
-  categories: { name: string } | null
+  categories: { name: string; slug: string } | null
 }
 
 export const metadata = {
@@ -15,23 +15,20 @@ export const metadata = {
     'Answers to common questions about hiring verified service providers in Kampala — plumbing, electrical, IT support, legal, and more.',
 }
 
-function slugifyCategory(name: string) {
-  return name.toLowerCase().replace(/\s+/g, '-')
-}
-
 export default async function FaqIndexPage() {
   const supabase = createPublicClient()
   const { data } = await supabase
-    .from('questions')
-    .select('slug, question, categories(name)')
+    .from('faqs')
+    .select('slug, question, categories(name, slug)')
     .order('question')
 
-  const questions = (data || []) as unknown as Question[]
+  const faqs = (data || []) as unknown as Faq[]
 
-  const grouped = questions.reduce<Record<string, Question[]>>((acc, q) => {
+  const grouped = faqs.reduce<Record<string, { slug: string; items: Faq[] }>>((acc, q) => {
     const categoryName = q.categories?.name || 'General'
-    acc[categoryName] = acc[categoryName] || []
-    acc[categoryName].push(q)
+    const categorySlug = q.categories?.slug || 'general'
+    if (!acc[categoryName]) acc[categoryName] = { slug: categorySlug, items: [] }
+    acc[categoryName].items.push(q)
     return acc
   }, {})
 
@@ -39,10 +36,10 @@ export default async function FaqIndexPage() {
     <div className="container mx-auto px-4 py-10 max-w-3xl">
       <h1 className="text-3xl font-bold mb-8">Frequently Asked Questions</h1>
 
-      {Object.entries(grouped).map(([categoryName, items]) => (
+      {Object.entries(grouped).map(([categoryName, { slug, items }]) => (
         <section key={categoryName} className="mb-10">
           <h2 className="text-xl font-semibold text-primary-blue mb-3">
-            <Link href={`/services/${slugifyCategory(categoryName)}`} className="hover:underline">
+            <Link href={`/services/${slug}`} className="hover:underline">
               {categoryName}
             </Link>
           </h2>
