@@ -1,77 +1,59 @@
 import { createPublicClient } from '@/lib/supabase/public'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import MarkdownLite from '@/components/MarkdownLite'
 
 export const revalidate = 3600 // rebuild in the background every hour
 
-interface Question {
+interface Faq {
   slug: string
   question: string
-  answer: string
-  categories: { id: string; name: string } | null
+  answer_md: string
+  meta_description: string | null
+  categories: { name: string; slug: string } | null
 }
 
 export async function generateStaticParams() {
   const supabase = createPublicClient()
-  const { data } = await supabase.from('questions').select('slug')
+  const { data } = await supabase.from('faqs').select('slug')
   return (data || []).map((q) => ({ slug: q.slug }))
 }
 
-async function getQuestion(slug: string): Promise<Question | null> {
+async function getFaq(slug: string): Promise<Faq | null> {
   const supabase = createPublicClient()
   const { data } = await supabase
-    .from('questions')
-    .select('slug, question, answer, categories(id, name)')
+    .from('faqs')
+    .select('slug, question, answer_md, meta_description, categories(name, slug)')
     .eq('slug', slug)
     .single()
-  return data as unknown as Question | null
+  return data as unknown as Faq | null
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const data = await getQuestion(params.slug)
+  const data = await getFaq(params.slug)
   if (!data) return { title: 'Question not found – ServiceHub-Ug' }
   return {
     title: `${data.question} – ServiceHub-Ug`,
-    description: data.answer.slice(0, 155),
+    description: data.meta_description || data.answer_md.slice(0, 155),
   }
 }
 
-export default async function QuestionPage({ params }: { params: { slug: string } }) {
-  const data = await getQuestion(params.slug)
+export default async function FaqSlugPage({ params }: { params: { slug: string } }) {
+  const data = await getFaq(params.slug)
   if (!data) notFound()
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: data.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: data.answer,
-        },
-      },
-    ],
-  }
 
   return (
     <article className="container mx-auto px-4 py-10 max-w-2xl">
       {data.categories && (
         <Link
-          href={`/services/${data.categories.name.toLowerCase().replace(/\s+/g, '-')}`}
+          href={`/services/${data.categories.slug}`}
           className="text-sm text-primary-blue hover:underline"
         >
           &larr; More {data.categories.name} questions
         </Link>
       )}
-      <h1 className="text-3xl font-bold mt-3 mb-4">{data.question}</h1>
-      <p className="text-lg leading-relaxed whitespace-pre-line">{data.answer}</p>
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <h1 className="text-3xl font-bold mt-3 mb-6">{data.question}</h1>
+      <MarkdownLite markdown={data.answer_md} />
     </article>
   )
 }
