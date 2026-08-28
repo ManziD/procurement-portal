@@ -38,9 +38,24 @@ async function getCategoryData(categorySlug: string) {
 export async function generateMetadata({ params }: { params: { category: string } }) {
   const data = await getCategoryData(params.category)
   if (!data) return { title: 'Not found – ServiceHub-Ug' }
+
+  const title = `${data.category.name} Services in Kampala – ServiceHub-Ug`
+  const description = `Find verified ${data.category.name.toLowerCase()} providers in Kampala. Common questions about ${data.category.name.toLowerCase()} services, pricing, and how to get started.`
+
   return {
-    title: `${data.category.name} Services in Kampala – ServiceHub-Ug`,
-    description: `Find verified ${data.category.name.toLowerCase()} providers in Kampala. Common questions about ${data.category.name.toLowerCase()} services, pricing, and how to get started.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `/services/${data.category.slug}`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
   }
 }
 
