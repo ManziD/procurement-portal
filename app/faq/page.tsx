@@ -9,10 +9,24 @@ interface Faq {
   categories: { name: string; slug: string } | null
 }
 
+const title = 'Frequently Asked Questions – ServiceHub-Ug'
+const description =
+  'Answers to common questions about hiring verified service providers in Kampala — plumbing, electrical, IT support, legal, and more.'
+
 export const metadata = {
-  title: 'Frequently Asked Questions – ServiceHub-Ug',
-  description:
-    'Answers to common questions about hiring verified service providers in Kampala — plumbing, electrical, IT support, legal, and more.',
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: '/faq',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title,
+    description,
+  },
 }
 
 export default async function FaqIndexPage() {
