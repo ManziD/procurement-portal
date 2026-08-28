@@ -20,7 +20,7 @@ async function getCategoryData(categorySlug: string) {
 
   const { data: category } = await supabase
     .from('categories')
-    .select('id, name, slug')
+    .select('id, name, slug, cta_label')
     .eq('slug', categorySlug)
     .single()
 
@@ -66,7 +66,7 @@ export default async function CategoryHubPage({
         href={`/browse?category=${encodeURIComponent(category.name)}`}
         className="inline-block mb-8 px-6 py-2 bg-accent-orange text-white rounded-lg hover:bg-opacity-90 transition-colors"
       >
-        Request a {category.name} provider
+        {category.cta_label}
       </Link>
 
       {faqs.length > 0 ? (
