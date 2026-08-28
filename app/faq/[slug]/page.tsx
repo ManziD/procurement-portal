@@ -32,9 +32,24 @@ async function getFaq(slug: string): Promise<Faq | null> {
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const data = await getFaq(params.slug)
   if (!data) return { title: 'Question not found – ServiceHub-Ug' }
+
+  const title = `${data.question} – ServiceHub-Ug`
+  const description = data.meta_description || data.answer_md.slice(0, 155)
+
   return {
-    title: `${data.question} – ServiceHub-Ug`,
-    description: data.meta_description || data.answer_md.slice(0, 155),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `/faq/${data.slug}`,
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
   }
 }
 
