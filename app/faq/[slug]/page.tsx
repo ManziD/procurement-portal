@@ -10,7 +10,7 @@ interface Faq {
   question: string
   answer_md: string
   meta_description: string | null
-  categories: { name: string; slug: string } | null
+  categories: { name: string; slug: string; cta_label: string } | null
 }
 
 export async function generateStaticParams() {
@@ -23,7 +23,7 @@ async function getFaq(slug: string): Promise<Faq | null> {
   const supabase = createPublicClient()
   const { data } = await supabase
     .from('faqs')
-    .select('slug, question, answer_md, meta_description, categories(name, slug)')
+    .select('slug, question, answer_md, meta_description, categories(name, slug, cta_label)')
     .eq('slug', slug)
     .single()
   return data as unknown as Faq | null
@@ -60,7 +60,7 @@ export default async function FaqSlugPage({ params }: { params: { slug: string }
           href={`/browse?category=${encodeURIComponent(data.categories.name)}`}
           className="inline-block mt-8 px-6 py-2 bg-accent-orange text-white rounded-lg hover:bg-opacity-90 transition-colors"
         >
-          Request a {data.categories.name} provider
+          {data.categories.cta_label}
         </Link>
       )}
     </article>
