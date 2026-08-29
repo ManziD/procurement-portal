@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2 } from 'lucide-react'
+import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2, ChevronDown, ArrowLeft } from 'lucide-react'
 import Chat from '@/components/Chat'
 import TrackActions from './TrackActions'
 
@@ -187,94 +187,100 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
   const showStatusBanner = request.status !== 'AWARDED' && request.status !== 'COMPLETED'
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Link href="/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
-        ← Back to Inbox
-      </Link>
-
-      {showStatusBanner ? (
-        <div className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
-          request.status === 'BIDS_RECEIVED' ? 'bg-purple-50 border border-purple-200' :
-          'bg-yellow-50 border border-yellow-200'
-        }`}>
-          <div className="text-primary-blue">{statusInfo.icon}</div>
-          <p className="text-gray-700">{statusInfo.text}</p>
-          <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Minimal header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm flex-shrink-0">
+        <button
+          onClick={() => router.push('/inbox')}
+          className="flex items-center text-primary-blue hover:underline text-sm"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-800">
+            {chatProps?.recipientName || 'Conversation'}
+          </span>
+          {request.status && (
+            <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
+          )}
         </div>
-      ) : (
-        <div className="mb-6 flex items-center gap-3">
-          <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
-        </div>
-      )}
+        <div className="w-16"></div> {/* spacer */}
+      </div>
 
-      {showChat && chatProps && (
-        <div className="mb-6">
-          <Chat {...chatProps} />
-        </div>
-      )}
-
-      {!showChat && (
-        <>
-          <h2 className="text-xl font-semibold text-primary-blue mb-4">Bids ({bids.length})</h2>
-          {bids.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8 text-gray-500">
-                No bids submitted yet. Check back later.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {bids.map((bid) => {
-                const providerData = bid.provider as any
-                const isPending = bid.status === 'PENDING' && request.status === 'INVITED'
-                const isAccepted = bid.status === 'ACCEPTED'
-                return (
-                  <Card key={bid.id} className={isAccepted ? 'border-green-500 border-2' : ''}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-semibold">{providerData?.business_name || 'Anonymous Provider'}</div>
-                          <div className="text-sm text-gray-600">
-                            <span className="font-medium">{formatCurrency(bid.price)}</span>
-                            {' • '}
-                            <span>{bid.timeline}</span>
-                          </div>
-                          {bid.message && <p className="text-sm text-gray-700 mt-1">{bid.message}</p>}
-                          {showProviderPhone && providerData?.phone && (
-                            <div className="text-sm text-gray-500 mt-1">
-                              📞 Provider phone: {providerData.phone}
-                            </div>
-                          )}
-                          <div className="mt-2">
-                            <Badge className={getBidStatusBadge(bid.status)}>{bid.status}</Badge>
-                          </div>
-                        </div>
-                        {isPending && !isCompleted && (
-                          <TrackActions
-                            bidId={bid.id}
-                            requestId={request.id}
-                            trackingToken={token}
-                          />
-                        )}
-                        {isAccepted && (
-                          <Badge className="bg-green-600">Accepted</Badge>
-                        )}
-                      </div>
+      {/* Chat area - fills remaining height */}
+      <div className="flex-1 overflow-hidden">
+        {showChat && chatProps ? (
+          <Chat {...chatProps} isFullHeight />
+        ) : (
+          <div className="p-4 h-full overflow-y-auto">
+            {/* If chat isn't shown, show the details */}
+            {!showChat && (
+              <>
+                <h2 className="text-xl font-semibold text-primary-blue mb-4">Bids ({bids.length})</h2>
+                {bids.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-8 text-gray-500">
+                      No bids submitted yet. Check back later.
                     </CardContent>
                   </Card>
-                )
-              })}
-            </div>
-          )}
-        </>
-      )}
+                ) : (
+                  <div className="space-y-4">
+                    {bids.map((bid) => {
+                      const providerData = bid.provider as any
+                      const isPending = bid.status === 'PENDING' && request.status === 'INVITED'
+                      const isAccepted = bid.status === 'ACCEPTED'
+                      return (
+                        <Card key={bid.id} className={isAccepted ? 'border-green-500 border-2' : ''}>
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-semibold">{providerData?.business_name || 'Anonymous Provider'}</div>
+                                <div className="text-sm text-gray-600">
+                                  <span className="font-medium">{formatCurrency(bid.price)}</span>
+                                  {' • '}
+                                  <span>{bid.timeline}</span>
+                                </div>
+                                {bid.message && <p className="text-sm text-gray-700 mt-1">{bid.message}</p>}
+                                {showProviderPhone && providerData?.phone && (
+                                  <div className="text-sm text-gray-500 mt-1">
+                                    📞 Provider phone: {providerData.phone}
+                                  </div>
+                                )}
+                                <div className="mt-2">
+                                  <Badge className={getBidStatusBadge(bid.status)}>{bid.status}</Badge>
+                                </div>
+                              </div>
+                              {isPending && !isCompleted && (
+                                <TrackActions
+                                  bidId={bid.id}
+                                  requestId={request.id}
+                                  trackingToken={token}
+                                />
+                              )}
+                              {isAccepted && (
+                                <Badge className="bg-green-600">Accepted</Badge>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
+      {/* Mark as Completed button (if applicable) */}
       {canMarkComplete && (
-        <div className="mt-8 flex flex-col items-center gap-2">
+        <div className="flex-shrink-0 p-4 bg-white border-t">
           <Button
             onClick={handleComplete}
             disabled={completing}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+            className="w-full bg-green-600 hover:bg-green-700 text-white"
           >
             {completing ? (
               <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Completing...</>
@@ -282,7 +288,7 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
               <><CheckCircle className="h-5 w-5 mr-2" /> Mark as Completed</>
             )}
           </Button>
-          {completeError && <p className="text-red-600 text-sm">{completeError}</p>}
+          {completeError && <p className="text-red-600 text-sm mt-2 text-center">{completeError}</p>}
         </div>
       )}
     </div>
