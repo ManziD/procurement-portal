@@ -21,6 +21,8 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
   const [user, setUser] = useState<any>(null)
   const [chatProps, setChatProps] = useState<any>(null)
   const [showChat, setShowChat] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [completeError, setCompleteError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -28,11 +30,9 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
       setError(null)
 
       try {
-        // 1. Get session client‑side
         const { data: { session } } = await supabase.auth.getSession()
         setUser(session?.user || null)
 
-        // 2. Fetch request
         const { data: requestData, error: requestError } = await supabase
           .from('service_requests')
           .select('*')
@@ -46,7 +46,6 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
         }
         setRequest(requestData)
 
-        // 3. Fetch bids
         const { data: bidsData } = await supabase
           .from('bids')
           .select(`
@@ -68,7 +67,6 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
 
         setBids(bidsData || [])
 
-        // 4. Check if chat should be shown
         const currentUser = session?.user
         if (currentUser) {
           const isAwardedOrCompleted = requestData.status === 'AWARDED' || requestData.status === 'COMPLETED'
@@ -96,6 +94,35 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
 
     loadData()
   }, [token])
+
+  const handleComplete = async () => {
+    setCompleting(true)
+    setCompleteError(null)
+
+    try {
+      const res = await fetch('/api/track/complete-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          requestId: request.id,
+          trackingToken: token,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to mark as completed')
+      }
+
+      // Success – refresh the page to show updated status
+      router.refresh()
+    } catch (err: any) {
+      setCompleteError(err.message)
+    } finally {
+      setCompleting(false)
+    }
+  }
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>
@@ -261,18 +288,19 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
       )}
 
       {canMarkComplete && (
-        <div className="mt-8 flex justify-center">
-          <form action="/api/track/complete-request" method="POST">
-            <input type="hidden" name="requestId" value={request.id} />
-            <input type="hidden" name="trackingToken" value={token} />
-            <Button
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
-            >
-              <CheckCircle className="h-5 w-5 mr-2" />
-              Mark as Completed
-            </Button>
-          </form>
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <Button
+            onClick={handleComplete}
+            disabled={completing}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+          >
+            {completing ? (
+              <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Completing...</>
+            ) : (
+              <><CheckCircle className="h-5 w-5 mr-2" /> Mark as Completed</>
+            )}
+          </Button>
+          {completeError && <p className="text-red-600 text-sm">{completeError}</p>}
         </div>
       )}
 
