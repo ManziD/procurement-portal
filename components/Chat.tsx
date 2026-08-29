@@ -106,7 +106,7 @@ export default function Chat({ requestId, currentUserId, recipientId, recipientN
         💬 Chat with {recipientName}
       </div>
 
-      <div className="h-60 overflow-y-auto p-4 space-y-2 bg-white">
+      <div className="h-96 overflow-y-auto p-4 space-y-2 bg-white">
         {messages.length === 0 ? (
           <div className="text-gray-400 text-sm text-center py-4">No messages yet. Say hello!</div>
         ) : (
