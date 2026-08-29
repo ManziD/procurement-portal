@@ -11,6 +11,7 @@ interface ChatProps {
   currentUserId: string
   recipientId: string
   recipientName: string
+  isFullHeight?: boolean
 }
 
 interface Message {
@@ -22,7 +23,7 @@ interface Message {
   is_read: boolean
 }
 
-export default function Chat({ requestId, currentUserId, recipientId, recipientName }: ChatProps) {
+export default function Chat({ requestId, currentUserId, recipientId, recipientName, isFullHeight = false }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
@@ -101,12 +102,16 @@ export default function Chat({ requestId, currentUserId, recipientId, recipientN
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <div className="bg-gray-50 px-4 py-2 border-b font-medium text-sm text-gray-700">
-        💬 Chat with {recipientName}
-      </div>
+    <div className={`flex flex-col h-full ${isFullHeight ? '' : 'border rounded-lg'}`}>
+      {/* Header – only show if not full height */}
+      {!isFullHeight && (
+        <div className="bg-gray-50 px-4 py-2 border-b font-medium text-sm text-gray-700">
+          💬 Chat with {recipientName}
+        </div>
+      )}
 
-      <div className="h-96 overflow-y-auto p-4 space-y-2 bg-white">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white">
         {messages.length === 0 ? (
           <div className="text-gray-400 text-sm text-center py-4">No messages yet. Say hello!</div>
         ) : (
@@ -127,7 +132,8 @@ export default function Chat({ requestId, currentUserId, recipientId, recipientN
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t p-2 bg-gray-50 flex gap-2">
+      {/* Input */}
+      <div className="flex-shrink-0 border-t p-2 bg-gray-50 flex gap-2">
         <Input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
