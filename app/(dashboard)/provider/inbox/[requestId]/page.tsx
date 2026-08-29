@@ -150,20 +150,17 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
   const showClientPhone = isPremium || request.status === 'AWARDED' || request.status === 'COMPLETED'
 
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <Link href="/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
         ← Back to Inbox
       </Link>
 
-      {/* Chat */}
       {showChat && chatProps && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">💬 Conversation</h2>
           <Chat {...chatProps} />
         </div>
       )}
 
-      {/* Bids (only if not awarded/completed) */}
       {!showChat && (
         <Card className="mb-6">
           <CardHeader>
