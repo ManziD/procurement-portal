@@ -172,9 +172,9 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
       case 'BIDS_RECEIVED':
         return { icon: <ClockIcon className="h-5 w-5" />, text: 'Bids received! Review them below.' }
       case 'AWARDED':
-        return { icon: <CheckCircle className="h-5 w-5" />, text: 'You have accepted a bid. The job is in progress.' }
+        return { icon: <CheckCircle className="h-5 w-5" />, text: '' } // keep empty, only show badge
       case 'COMPLETED':
-        return { icon: <CheckCircle className="h-5 w-5" />, text: 'Job completed! Thank you for using ServiceHub-Ug.' }
+        return { icon: <CheckCircle className="h-5 w-5" />, text: '' } // empty
       default:
         return { icon: <ClockIcon className="h-5 w-5" />, text: 'Status: ' + status }
     }
@@ -185,33 +185,37 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
   const isAwarded = request.status === 'AWARDED'
   const canMarkComplete = isAwarded && !isCompleted
 
+  // Only show the status banner if there's a meaningful message (not for AWARDED/COMPLETED)
+  const showStatusBanner = request.status !== 'AWARDED' && request.status !== 'COMPLETED'
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <Link href="/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
         ← Back to Inbox
       </Link>
 
-      {/* Status Banner */}
-      <div className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
-        request.status === 'COMPLETED' ? 'bg-green-50 border border-green-200' :
-        request.status === 'AWARDED' ? 'bg-blue-50 border border-blue-200' :
-        request.status === 'BIDS_RECEIVED' ? 'bg-purple-50 border border-purple-200' :
-        'bg-yellow-50 border border-yellow-200'
-      }`}>
-        <div className="text-primary-blue">{statusInfo.icon}</div>
-        <p className="text-gray-700">{statusInfo.text}</p>
-        <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
-      </div>
+      {showStatusBanner ? (
+        <div className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
+          request.status === 'BIDS_RECEIVED' ? 'bg-purple-50 border border-purple-200' :
+          'bg-yellow-50 border border-yellow-200'
+        }`}>
+          <div className="text-primary-blue">{statusInfo.icon}</div>
+          <p className="text-gray-700">{statusInfo.text}</p>
+          <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
+        </div>
+      ) : (
+        // For AWARDED or COMPLETED, just show a simple status badge (no banner)
+        <div className="mb-6 flex items-center gap-3">
+          <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
+        </div>
+      )}
 
-      {/* Chat */}
       {showChat && chatProps && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">💬 Conversation</h2>
           <Chat {...chatProps} />
         </div>
       )}
 
-      {/* Bids (only if not awarded/completed) */}
       {!showChat && (
         <>
           <h2 className="text-xl font-semibold text-primary-blue mb-4">Bids ({bids.length})</h2>
@@ -268,7 +272,6 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
         </>
       )}
 
-      {/* Mark as Completed Button */}
       {canMarkComplete && (
         <div className="mt-8 flex flex-col items-center gap-2">
           <Button
