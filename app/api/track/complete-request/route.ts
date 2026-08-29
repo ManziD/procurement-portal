@@ -18,19 +18,39 @@ export async function POST(request: Request) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Update the request status to COMPLETED
-    const { error } = await supabase
+    // 1. Verify the request exists and matches the tracking token
+    const { data: requestData, error: fetchError } = await supabase
+      .from('service_requests')
+      .select('id, status')
+      .eq('id', requestId)
+      .eq('tracking_token', trackingToken)
+      .single()
+
+    if (fetchError || !requestData) {
+      return NextResponse.json(
+        { error: 'Invalid tracking token or request' },
+        { status: 403 }
+      )
+    }
+
+    // 2. Check that the status is AWARDED
+    if (requestData.status !== 'AWARDED') {
+      return NextResponse.json(
+        { error: 'Request is not in AWARDED status' },
+        { status: 400 }
+      )
+    }
+
+    // 3. Update to COMPLETED
+    const { error: updateError } = await supabase
       .from('service_requests')
       .update({ status: 'COMPLETED' })
       .eq('id', requestId)
-      .eq('tracking_token', trackingToken) // extra security
 
-    if (error) throw error
+    if (updateError) throw updateError
 
-    // Redirect back to the tracking page
-    return NextResponse.redirect(
-      new URL(`/track/${trackingToken}`, request.url)
-    )
+    // 4. Return success (client will handle redirect)
+    return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('Complete request error:', error)
     return NextResponse.json(
