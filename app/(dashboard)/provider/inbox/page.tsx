@@ -99,7 +99,7 @@ export default function ProviderInbox() {
 
   if (conversations.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
         <Card>
           <CardContent className="text-center py-8 text-gray-500">
@@ -111,7 +111,7 @@ export default function ProviderInbox() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
       <div className="space-y-3">
         {conversations.map((conv) => (
