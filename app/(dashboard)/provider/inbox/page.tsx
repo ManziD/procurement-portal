@@ -5,140 +5,119 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { formatDistanceToNow } from 'date-fns'
-
-interface Conversation {
-  otherUserId: string
-  otherName: string
-  requestId: string
-  lastMessage: string
-  lastMessageTime: string
-}
+import { Badge } from '@/components/ui/badge'
+import { MessageCircle, Clock, CheckCircle, XCircle } from 'lucide-react'
 
 export default function ProviderInbox() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [invitations, setInvitations] = useState<any[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    const loadConversations = async () => {
+    const loadData = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push('/login')
         return
       }
+      setUserId(session.user.id)
 
-      const { data: messages, error } = await supabase
-        .from('messages')
-        .select(`
-          id,
-          content,
-          created_at,
-          sender_id,
-          recipient_id,
-          request_id
-        `)
-        .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
-        .order('created_at', { ascending: false })
+      // 🔥 Simplified: use the view
+      const { data } = await supabase
+        .from('provider_inbox_view')
+        .select('*')
+        .eq('provider_id', session.user.id)
+        .order('invited_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching messages:', error)
-        setLoading(false)
-        return
-      }
-
-      const grouped = new Map<string, Conversation>()
-
-      for (const msg of messages) {
-        const otherId = msg.sender_id === session.user.id ? msg.recipient_id : msg.sender_id
-        const key = `${otherId}-${msg.request_id}`
-
-        if (!grouped.has(key)) {
-          let otherName = 'Client'
-
-          const { data: client } = await supabase
-            .from('clients')
-            .select('name')
-            .eq('id', otherId)
-            .single()
-
-          if (client) {
-            otherName = client.name
-          } else {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', otherId)
-              .single()
-            if (profile) {
-              otherName = profile.full_name
-            }
-          }
-
-          grouped.set(key, {
-            otherUserId: otherId,
-            otherName,
-            requestId: msg.request_id,
-            lastMessage: msg.content,
-            lastMessageTime: msg.created_at,
-          })
-        }
-      }
-
-      setConversations(Array.from(grouped.values()))
+      setInvitations(data || [])
       setLoading(false)
     }
-
-    loadConversations()
+    loadData()
   }, [router])
+
+  const getStatusBadge = (status: string) => {
+    const map: Record<string, { label: string, className: string }> = {
+      'PENDING': { label: 'New', className: 'bg-yellow-500' },
+      'VIEWED': { label: 'Viewed', className: 'bg-blue-500' },
+      'BID_SUBMITTED': { label: 'Bid Sent', className: 'bg-green-500' },
+      'DECLINED': { label: 'Declined', className: 'bg-gray-500' },
+    }
+    return map[status] || { label: status, className: 'bg-gray-500' }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'PENDING': return <Clock className="h-4 w-4" />
+      case 'BID_SUBMITTED': return <CheckCircle className="h-4 w-4" />
+      case 'DECLINED': return <XCircle className="h-4 w-4" />
+      default: return <MessageCircle className="h-4 w-4" />
+    }
+  }
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>
   }
 
-  if (conversations.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-primary-blue">Inbox</h1>
+        <div className="text-sm text-gray-500">
+          {invitations.length} conversations
+        </div>
+      </div>
+
+      {invitations.length === 0 ? (
         <Card>
-          <CardContent className="text-center py-8 text-gray-500">
-            No conversations yet. Start messaging your clients.
+          <CardContent className="text-center py-12">
+            <div className="text-6xl mb-4">📭</div>
+            <h2 className="text-xl font-semibold text-gray-700">No conversations yet</h2>
+            <p className="text-gray-500 mt-2">
+              When clients invite you to their requests, they'll appear here.
+            </p>
           </CardContent>
         </Card>
-      </div>
-    )
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <h1 className="text-2xl font-bold text-primary-blue mb-6">Inbox</h1>
-      <div className="space-y-3">
-        {conversations.map((conv) => (
-          <Link
-            key={`${conv.otherUserId}-${conv.requestId}`}
-            href={`/provider/inbox/${conv.requestId}`}
-            className="block"
-          >
-            <Card className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 flex items-center gap-4">
-                <Avatar className="h-10 w-10 bg-primary-blue/10">
-                  <AvatarFallback className="text-primary-blue">
-                    {conv.otherName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold">{conv.otherName}</div>
-                  <div className="text-sm text-gray-600 truncate">{conv.lastMessage}</div>
-                </div>
-                <div className="text-xs text-gray-400 whitespace-nowrap">
-                  {formatDistanceToNow(new Date(conv.lastMessageTime), { addSuffix: true })}
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      ) : (
+        <div className="space-y-3">
+          {invitations.map((inv) => {
+            const statusInfo = getStatusBadge(inv.invitation_status)
+            return (
+              <Link
+                key={inv.invitation_id}
+                href={`/provider/inbox/${inv.request_id}`}
+                className="block"
+              >
+                <Card className="hover:shadow-md transition-shadow border-l-4 border-l-primary-blue">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold truncate">
+                          {inv.request_title || 'Untitled Request'}
+                        </div>
+                        <Badge className={statusInfo.className}>
+                          {getStatusIcon(inv.invitation_status)}
+                          <span className="ml-1">{statusInfo.label}</span>
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        <span className="font-medium">{inv.client_name || 'Anonymous'}</span>
+                        {' • '}
+                        {inv.location || 'Unknown location'}
+                        {' • '}
+                        {inv.timeline || 'No timeline'}
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-400 ml-4 flex-shrink-0">
+                      {new Date(inv.invited_at).toLocaleDateString()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
