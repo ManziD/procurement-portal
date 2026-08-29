@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Clock } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Calendar, MapPin, Clock, ArrowLeft, Loader2 } from 'lucide-react'
 import BidForm from './BidForm'
 import Chat from '@/components/Chat'
 
@@ -148,48 +147,84 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
   }
 
   const showClientPhone = isPremium || request.status === 'AWARDED' || request.status === 'COMPLETED'
+  const canSubmitBid = !existingBid || existingBid.status === 'REJECTED' || existingBid.status === 'WITHDRAWN'
+  const hasPendingBid = existingBid && existingBid.status === 'PENDING'
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Link href="/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
-        ← Back to Inbox
-      </Link>
-
-      {showChat && chatProps && (
-        <div className="mb-6">
-          <Chat {...chatProps} />
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Minimal header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm flex-shrink-0">
+        <button
+          onClick={() => router.push('/provider/inbox')}
+          className="flex items-center text-primary-blue hover:underline text-sm"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-800">
+            {showChat ? chatProps?.recipientName || 'Conversation' : request.title}
+          </span>
+          {request.status && (
+            <Badge className={
+              request.status === 'AWARDED' ? 'bg-green-600' :
+              request.status === 'COMPLETED' ? 'bg-gray-500' :
+              request.status === 'INVITED' ? 'bg-blue-500' :
+              'bg-yellow-500'
+            }>
+              {request.status}
+            </Badge>
+          )}
         </div>
-      )}
+        <div className="w-16"></div> {/* spacer */}
+      </div>
 
-      {!showChat && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Bids ({allBids.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {allBids.length === 0 ? (
-              <p className="text-gray-500">No bids yet. Be the first to submit!</p>
-            ) : (
-              <div className="space-y-4">
-                {allBids.map((bid) => {
-                  const providerInfo = bid.provider as any
-                  const isOwn = bid.provider_id === providerId
-                  return (
-                    <div key={bid.id} className={`border rounded-lg p-4 ${isOwn ? 'bg-primary-blue/5 border-primary-blue' : 'bg-white'}`}>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-semibold">
-                            {isOwn ? 'You' : providerInfo?.business_name || 'Unknown Provider'}
-                            {isOwn && <span className="text-xs ml-2 bg-primary-blue text-white px-2 py-0.5 rounded-full">Your Bid</span>}
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            <span className="font-medium">UGX {bid.price?.toLocaleString()}</span>
-                            {' • '}
-                            <span>{bid.timeline}</span>
-                          </div>
-                          {bid.message && <p className="text-sm text-gray-700 mt-1">{bid.message}</p>}
-                          <div className="mt-1">
-                            <Badge className={`${
+      {/* Main content – fills remaining height */}
+      <div className="flex-1 overflow-hidden">
+        {showChat && chatProps ? (
+          <Chat {...chatProps} isFullHeight />
+        ) : (
+          <div className="h-full overflow-y-auto p-4 space-y-4">
+            {/* Request details (collapsed info) */}
+            <div className="bg-white rounded-lg border p-3 text-sm">
+              <p className="font-medium">{request.title}</p>
+              <div className="flex flex-wrap gap-3 mt-1 text-gray-600">
+                <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{request.location}</span>
+                <span className="flex items-center"><Clock className="h-4 w-4 mr-1" />{request.timeline || 'No timeline'}</span>
+              </div>
+              {request.client_phone && showClientPhone && (
+                <div className="text-gray-500 mt-1">📞 Client: {request.client_phone}</div>
+              )}
+              {!showClientPhone && request.client_phone && (
+                <div className="text-gray-400 text-sm mt-1">🔒 Premium providers can see contact</div>
+              )}
+              {request.description && <p className="text-gray-700 mt-2">{request.description}</p>}
+            </div>
+
+            {/* Bids list */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Bids ({allBids.length})</h3>
+              {allBids.length === 0 ? (
+                <p className="text-gray-500">No bids yet. Be the first to submit!</p>
+              ) : (
+                <div className="space-y-3">
+                  {allBids.map((bid) => {
+                    const isOwn = bid.provider_id === providerId
+                    return (
+                      <div key={bid.id} className={`border rounded-lg p-4 ${isOwn ? 'bg-primary-blue/5 border-primary-blue' : 'bg-white'}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-semibold">
+                              {isOwn ? 'You' : bid.provider?.business_name || 'Unknown Provider'}
+                              {isOwn && <span className="text-xs ml-2 bg-primary-blue text-white px-2 py-0.5 rounded-full">Your Bid</span>}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <span className="font-medium">UGX {bid.price?.toLocaleString()}</span>
+                              {' • '}
+                              <span>{bid.timeline}</span>
+                            </div>
+                            {bid.message && <p className="text-sm text-gray-700 mt-1">{bid.message}</p>}
+                            <Badge className={`mt-1 ${
                               bid.status === 'ACCEPTED' ? 'bg-green-500' :
                               bid.status === 'REJECTED' ? 'bg-red-500' :
                               'bg-yellow-500'
@@ -197,46 +232,39 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
                               {bid.status}
                             </Badge>
                           </div>
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {new Date(bid.created_at).toLocaleDateString()}
+                          <div className="text-xs text-gray-400">
+                            {new Date(bid.created_at).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Submit Bid form (if applicable) */}
+            {canSubmitBid && (
+              <div className="bg-white rounded-lg border p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Submit Your Bid</h3>
+                <BidForm requestId={requestId} existingBid={existingBid} />
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
 
-      {(!existingBid || existingBid.status === 'REJECTED' || existingBid.status === 'WITHDRAWN') && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Submit Your Bid</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BidForm requestId={requestId} existingBid={existingBid} />
-          </CardContent>
-        </Card>
-      )}
-
-      {existingBid && existingBid.status === 'PENDING' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Your Bid</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div><span className="font-medium">Price:</span> UGX {existingBid.price?.toLocaleString()}</div>
-              <div><span className="font-medium">Timeline:</span> {existingBid.timeline}</div>
-              {existingBid.message && <div><span className="font-medium">Message:</span> {existingBid.message}</div>}
-              <Badge className="bg-yellow-500">Pending review</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            {hasPendingBid && (
+              <div className="bg-white rounded-lg border p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Your Bid</h3>
+                <div className="space-y-2">
+                  <div><span className="font-medium">Price:</span> UGX {existingBid.price?.toLocaleString()}</div>
+                  <div><span className="font-medium">Timeline:</span> {existingBid.timeline}</div>
+                  {existingBid.message && <div><span className="font-medium">Message:</span> {existingBid.message}</div>}
+                  <Badge className="bg-yellow-500">Pending review</Badge>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
