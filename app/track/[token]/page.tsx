@@ -172,9 +172,9 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
       case 'BIDS_RECEIVED':
         return { icon: <ClockIcon className="h-5 w-5" />, text: 'Bids received! Review them below.' }
       case 'AWARDED':
-        return { icon: <CheckCircle className="h-5 w-5" />, text: '' } // keep empty, only show badge
+        return { icon: <CheckCircle className="h-5 w-5" />, text: '' }
       case 'COMPLETED':
-        return { icon: <CheckCircle className="h-5 w-5" />, text: '' } // empty
+        return { icon: <CheckCircle className="h-5 w-5" />, text: '' }
       default:
         return { icon: <ClockIcon className="h-5 w-5" />, text: 'Status: ' + status }
     }
@@ -184,12 +184,10 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
   const isCompleted = request.status === 'COMPLETED'
   const isAwarded = request.status === 'AWARDED'
   const canMarkComplete = isAwarded && !isCompleted
-
-  // Only show the status banner if there's a meaningful message (not for AWARDED/COMPLETED)
   const showStatusBanner = request.status !== 'AWARDED' && request.status !== 'COMPLETED'
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <Link href="/inbox" className="inline-flex items-center text-primary-blue hover:underline mb-4">
         ← Back to Inbox
       </Link>
@@ -204,7 +202,6 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
           <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
         </div>
       ) : (
-        // For AWARDED or COMPLETED, just show a simple status badge (no banner)
         <div className="mb-6 flex items-center gap-3">
           <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
         </div>
