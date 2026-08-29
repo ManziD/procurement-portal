@@ -20,7 +20,7 @@ import {
   MessageCircle,
   ShieldCheck,
 } from 'lucide-react'
-import LocationDropdown from './LocationDropdown'
+// import LocationDropdown from './LocationDropdown' // removed
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
@@ -118,7 +118,7 @@ export default function Navbar() {
 
           {/* Desktop Right Section */}
           <div className="hidden md:flex items-center space-x-4">
-            <LocationDropdown />
+            {/* <LocationDropdown /> removed */}
             {user ? (
               <div className="flex items-center space-x-2">
                 <Link href={getDashboardLink()}>
