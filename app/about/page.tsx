@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import AboutHero from '@/components/AboutHero'
 
 export const metadata: Metadata = {
   title: 'About ServiceHub-Ug – Connecting Kampala to Trusted Services',
@@ -61,8 +62,9 @@ export default function AboutPage() {
         }}
       />
 
+      <AboutHero />
+
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-4xl font-bold text-primary-blue mb-6">About Us</h1>
         <p className="text-xl font-semibold text-gray-700 mb-8">
           Connecting You to the Services You Need
         </p>
