@@ -66,7 +66,6 @@ export default function ClientInbox() {
         if (!grouped.has(key)) {
           let otherName = 'Unknown'
 
-          // Try provider first
           const { data: provider } = await supabase
             .from('service_providers')
             .select('business_name')
@@ -76,7 +75,6 @@ export default function ClientInbox() {
           if (provider) {
             otherName = provider.business_name
           } else {
-            // Try clients table
             const { data: client } = await supabase
               .from('clients')
               .select('name')
@@ -85,7 +83,6 @@ export default function ClientInbox() {
             if (client) {
               otherName = client.name
             } else {
-              // Try profiles
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('full_name')
@@ -121,7 +118,7 @@ export default function ClientInbox() {
 
   if (conversations.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <h1 className="text-2xl font-bold text-primary-blue mb-6">Your Inbox</h1>
         <Card>
           <CardContent className="text-center py-8 text-gray-500">
@@ -133,7 +130,7 @@ export default function ClientInbox() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <h1 className="text-2xl font-bold text-primary-blue mb-6">Your Inbox</h1>
       <div className="space-y-3">
         {conversations.map((conv) => (
