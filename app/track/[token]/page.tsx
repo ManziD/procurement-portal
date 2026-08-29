@@ -285,14 +285,6 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
           {completeError && <p className="text-red-600 text-sm">{completeError}</p>}
         </div>
       )}
-
-      <div className="mt-8 text-center text-sm text-gray-500">
-        <p>Need help? Contact us at <a href="mailto:info@servicehub-ug.com" className="text-primary-blue hover:underline">info@servicehub-ug.com</a></p>
-        <div className="mt-2 flex justify-center gap-4">
-          <Link href="/" className="text-primary-blue hover:underline">Home</Link>
-          <Link href="/browse" className="text-primary-blue hover:underline">Browse Services</Link>
-        </div>
-      </div>
     </div>
   )
 }
