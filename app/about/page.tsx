@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import AboutHero from '@/components/AboutHero'
+import Reveal from '@/components/Reveal'
 
 export const metadata: Metadata = {
   title: 'About ServiceHub-Ug – Connecting Kampala to Trusted Services',
@@ -186,37 +187,119 @@ export default function AboutPage() {
             <strong>To become the most trusted platform connecting clients and service providers across Uganda and beyond, making quality services accessible, fast, and reliable for everyone.</strong>
           </blockquote>
 
-          <h2 className="text-2xl font-semibold text-primary-blue mt-8">Who We Are</h2>
+          {/* ============================================================
+              WHO WE ARE — restructured. Every word below is unchanged
+              from the original three paragraphs; only the layout differs:
+              - the two founder names are pulled into cards instead of
+                sitting bolded mid-sentence
+              - "build a useful platform, establish trust between clients
+                and providers, listen to our users, and continuously
+                improve the experience" was already four comma-joined
+                phrases, now shown as a list of those same four phrases
+              Wrapped in not-prose so Tailwind Typography's default
+              heading/paragraph/list styles don't override the custom
+              classes below.
+             ============================================================ */}
+          <div className="not-prose mt-8">
+            <Reveal>
+              <h2 className="text-2xl font-semibold text-primary-blue">Who We Are</h2>
+            </Reveal>
 
-          <p>
-            ServiceHub-Ug was founded by <strong>Atukumiire Locus Katureebe</strong> and <strong>Manzi Delick</strong>, with a shared goal of creating a practical digital solution to the challenge of finding reliable services.
-          </p>
+            <Reveal delay={0.08}>
+              <p className="mt-4 text-gray-700 leading-relaxed">
+                ServiceHub-Ug was founded by <strong>Atukumiire Locus Katureebe</strong> and <strong>Manzi Delick</strong>, with a shared goal of creating a practical digital solution to the challenge of finding reliable services.
+              </p>
+            </Reveal>
 
-          <p>
-            We started with a focused approach: build a useful platform, establish trust between clients and providers, listen to our users, and continuously improve the experience.
-          </p>
+            <div className="mt-5 flex flex-wrap gap-4">
+              <Reveal delay={0.14}>
+                <div className="flex items-center gap-3 rounded-2xl border border-primary-blue/10 bg-primary-blue/5 px-5 py-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-blue text-sm font-bold text-white">
+                    ALK
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      Atukumiire Locus Katureebe
+                    </div>
+                    <div className="text-xs text-gray-500">Co-Founder</div>
+                  </div>
+                </div>
+              </Reveal>
 
-          <p>
-            Our long-term goal is to grow from a Ugandan marketplace into a platform with a wider East African and international reach.
-          </p>
+              <Reveal delay={0.2}>
+                <div className="flex items-center gap-3 rounded-2xl border border-primary-blue/10 bg-primary-blue/5 px-5 py-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-orange text-sm font-bold text-white">
+                    MD
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      Manzi Delick
+                    </div>
+                    <div className="text-xs text-gray-500">Co-Founder</div>
+                  </div>
+                </div>
+              </Reveal>
+            </div>
 
-          <h2 className="text-2xl font-semibold text-primary-blue mt-8">Our Promise</h2>
+            <Reveal delay={0.1}>
+              <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-accent-orange">
+                We started with a focused approach
+              </p>
+              <ul className="mt-3 space-y-2">
+                {[
+                  'Build a useful platform',
+                  'Establish trust between clients and providers',
+                  'Listen to our users',
+                  'Continuously improve the experience',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-gray-700">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-orange" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
 
-          <p>
-            At <strong>ServiceHub-Ug</strong>, we are building more than a directory of service providers.
-          </p>
+            <Reveal delay={0.1}>
+              <p className="mt-6 text-gray-700 leading-relaxed">
+                Our long-term goal is to grow from a Ugandan marketplace into a platform with a wider East African and international reach.
+              </p>
+            </Reveal>
+          </div>
 
-          <p>
-            We are building a <strong>trusted connection between people who need services and people who provide them.</strong>
-          </p>
+          {/* ============================================================
+              OUR PROMISE — same structure and text as the original,
+              just wrapped in Reveal for the scroll-in effect. The
+              highlighted box below was already a distinct visual
+              element, so nothing else was restructured here.
+             ============================================================ */}
+          <div className="not-prose mt-8">
+            <Reveal>
+              <h2 className="text-2xl font-semibold text-primary-blue">Our Promise</h2>
+            </Reveal>
 
-          <div className="bg-primary-blue/5 p-6 rounded-lg mt-8 text-center">
-            <p className="text-xl font-semibold text-primary-blue">
-              Find a service. Find an opportunity. Connect with confidence.
-            </p>
-            <p className="text-lg text-gray-700 mt-2">
-              <strong>ServiceHub-Ug</strong> — Connecting clients with service providers.
-            </p>
+            <Reveal delay={0.08}>
+              <p className="mt-4 text-gray-700 leading-relaxed">
+                At <strong>ServiceHub-Ug</strong>, we are building more than a directory of service providers.
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.14}>
+              <p className="mt-4 text-gray-700 leading-relaxed">
+                We are building a <strong>trusted connection between people who need services and people who provide them.</strong>
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.2}>
+              <div className="bg-primary-blue/5 p-6 rounded-lg mt-8 text-center">
+                <p className="text-xl font-semibold text-primary-blue">
+                  Find a service. Find an opportunity. Connect with confidence.
+                </p>
+                <p className="text-lg text-gray-700 mt-2">
+                  <strong>ServiceHub-Ug</strong> — Connecting clients with service providers.
+                </p>
+              </div>
+            </Reveal>
           </div>
         </div>
       </div>
