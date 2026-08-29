@@ -7,14 +7,16 @@ import Footer from './Footer'
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  // Hide footer on inbox and tracking pages
-  const hideFooter = pathname?.includes('/inbox') || pathname?.includes('/track')
+  // Hide navbar AND footer on inbox and tracking pages
+  const isInboxPage = pathname?.includes('/inbox') || pathname?.includes('/track')
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      {!hideFooter && <Footer />}
+      {!isInboxPage && <Navbar />}
+      <main className={`flex-1 ${isInboxPage ? 'h-screen overflow-hidden' : ''}`}>
+        {children}
+      </main>
+      {!isInboxPage && <Footer />}
     </div>
   )
 }
