@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2, ChevronDown } from 'lucide-react'
+import { MapPin, Clock, Calendar, CheckCircle, Clock as ClockIcon, Loader2 } from 'lucide-react'
 import Chat from '@/components/Chat'
 import TrackActions from './TrackActions'
 
@@ -115,7 +115,6 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
         throw new Error(data.error || 'Failed to mark as completed')
       }
 
-      // Success – refresh the page to show updated status
       router.refresh()
     } catch (err: any) {
       setCompleteError(err.message)
@@ -192,6 +191,7 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
         ← Back to Inbox
       </Link>
 
+      {/* Status Banner */}
       <div className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
         request.status === 'COMPLETED' ? 'bg-green-50 border border-green-200' :
         request.status === 'AWARDED' ? 'bg-blue-50 border border-blue-200' :
@@ -203,6 +203,7 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
         <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
       </div>
 
+      {/* Chat */}
       {showChat && chatProps && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">💬 Conversation</h2>
@@ -210,27 +211,7 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
         </div>
       )}
 
-      <details className={`mb-6 border rounded-lg p-4 ${showChat ? 'bg-gray-50' : ''}`}>
-        <summary className="cursor-pointer font-medium text-gray-700 flex items-center gap-2">
-          <span>📋 Request Details</span>
-          <ChevronDown className="h-4 w-4" />
-        </summary>
-        <div className="mt-4 space-y-3">
-          <div>
-            <h3 className="text-xl font-semibold text-primary-blue">{request.title}</h3>
-            <div className="flex flex-wrap gap-3 mt-1 text-sm text-gray-600">
-              <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{request.location}</span>
-              <span className="flex items-center"><Clock className="h-4 w-4 mr-1" />{request.timeline || 'No timeline'}</span>
-              <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(request.created_at).toLocaleDateString()}</span>
-            </div>
-          </div>
-          <p className="text-gray-700">{request.description || 'No description provided.'}</p>
-          {request.client_phone && (
-            <div className="text-sm text-gray-500">📞 Phone: {request.client_phone}</div>
-          )}
-        </div>
-      </details>
-
+      {/* Bids (only if not awarded/completed) */}
       {!showChat && (
         <>
           <h2 className="text-xl font-semibold text-primary-blue mb-4">Bids ({bids.length})</h2>
@@ -287,6 +268,7 @@ export default function TrackTokenPage({ params }: { params: { token: string } }
         </>
       )}
 
+      {/* Mark as Completed Button */}
       {canMarkComplete && (
         <div className="mt-8 flex flex-col items-center gap-2">
           <Button
