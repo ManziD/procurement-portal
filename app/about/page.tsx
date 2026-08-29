@@ -120,7 +120,6 @@ export default function AboutPage() {
             <li>Professional and business services</li>
             <li>Personal, beauty and wellness services</li>
             <li>Events and entertainment</li>
-            <li>Automotive and mobility services</li>
             <li>Appliance and electronic repair</li>
             <li>Consultancy and other professional services</li>
           </ul>
@@ -136,7 +135,7 @@ export default function AboutPage() {
           </p>
 
           <p>
-            Choosing someone to provide a service—whether for your home, business, vehicle, event, or personal needs—requires confidence. ServiceHub-Ug is therefore designed to incorporate <strong>provider verification, ratings, quality control, and clear processes</strong> to help customers make more informed choices.
+            Choosing someone to provide a service—whether for your home, business, event, or personal needs—requires confidence. ServiceHub-Ug is therefore designed to incorporate <strong>provider verification, ratings, and clear processes</strong> to help customers make more informed choices.
           </p>
 
           <p>
