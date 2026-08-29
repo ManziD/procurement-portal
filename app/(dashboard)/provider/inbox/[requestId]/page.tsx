@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Calendar, MapPin, Clock } from 'lucide-react'
 import BidForm from './BidForm'
 import Chat from '@/components/Chat'
 
@@ -115,7 +115,6 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
 
         setAllBids(allBidsData || [])
 
-        // Set up chat props if the request is awarded or completed and the client has a profile_id
         if ((req.status === 'AWARDED' || req.status === 'COMPLETED') && req.profile_id) {
           const acceptedBid = allBidsData?.find(b => b.status === 'ACCEPTED')
           if (acceptedBid && acceptedBid.provider) {
@@ -156,7 +155,7 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
         ← Back to Inbox
       </Link>
 
-      {/* Chat - shown first when available */}
+      {/* Chat */}
       {showChat && chatProps && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-700 mb-2">💬 Conversation</h2>
@@ -164,46 +163,7 @@ export default function InboxDetail({ params }: { params: { requestId: string } 
         </div>
       )}
 
-      {/* Request Details (collapsible) */}
-      <details className="mb-6 border rounded-lg p-4 bg-gray-50">
-        <summary className="cursor-pointer font-medium text-gray-700 flex items-center gap-2">
-          <span>📋 Request Details</span>
-          <ChevronDown className="h-4 w-4" />
-        </summary>
-        <div className="mt-4 space-y-3">
-          <div>
-            <h3 className="text-xl font-semibold text-primary-blue">{request.title}</h3>
-            <div className="flex flex-wrap gap-3 mt-1 text-sm text-gray-600">
-              <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{request.location}</span>
-              <span className="flex items-center"><Clock className="h-4 w-4 mr-1" />{request.timeline || 'No timeline'}</span>
-              <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(request.created_at).toLocaleDateString()}</span>
-            </div>
-          </div>
-          <p className="text-gray-700">{request.description || 'No description provided.'}</p>
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <div>
-              <span className="text-sm font-medium text-gray-500">Client</span>
-              <p className="font-medium">{client?.name || 'Anonymous'}</p>
-            </div>
-            {showClientPhone && client?.phone && (
-              <div>
-                <span className="text-sm font-medium text-gray-500">Phone</span>
-                <p className="font-medium text-primary-blue">{client.phone}</p>
-              </div>
-            )}
-            {!showClientPhone && client?.phone && (
-              <div>
-                <span className="text-sm font-medium text-gray-500">Phone</span>
-                <p className="text-gray-400 text-sm">
-                  {request.status === 'AWARDED' || request.status === 'COMPLETED' ? 'Contact info available after job is awarded' : '🔒 Upgrade to Premium to see contact details'}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </details>
-
-      {/* Bids (only if not awarded/completed or if user wants to see) */}
+      {/* Bids (only if not awarded/completed) */}
       {!showChat && (
         <Card className="mb-6">
           <CardHeader>
