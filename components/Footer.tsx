@@ -28,9 +28,7 @@ export default function Footer() {
             HELP CENTER
           </a>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">
-            TERMS &amp; CONDITIONS
-          </a>
+          <Link href="/terms" className="hover:text-accent-orange transition-colors">TERMS &amp; CONDITIONS</Link>
         </div>
 
         {/* Links Row 2 */}
