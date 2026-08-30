@@ -42,9 +42,7 @@ export default function Footer() {
             REPORT A SERVICE
           </a>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">
-            PRIVACY NOTICE
-          </a>
+          <Link href="/privacy" className="hover:text-accent-orange transition-colors">PRIVACY NOTICE</Link>
         </div>
 
         {/* Contact Info – left‑aligned everywhere */}
