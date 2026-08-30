@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { Mail, Phone, MapPin } from 'lucide-react'
 
 export default function Footer() {
+  const whatsappUrl = 'https://wa.me/256750349712'
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="container mx-auto px-4 py-8">
@@ -9,18 +10,43 @@ export default function Footer() {
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
           <Link href="/faq" className="hover:text-accent-orange transition-colors">FAQ</Link>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">CHAT WITH US</a>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-accent-orange transition-colors"
+          >
+            CHAT WITH US
+          </a>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">HELP CENTER</a>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-accent-orange transition-colors"
+          >
+            HELP CENTER
+          </a>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">TERMS &amp; CONDITIONS</a>
+          <a href="#" className="hover:text-accent-orange transition-colors">
+            TERMS &amp; CONDITIONS
+          </a>
         </div>
 
         {/* Links Row 2 */}
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm mt-2">
-          <a href="#" className="hover:text-accent-orange transition-colors">REPORT A SERVICE</a>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-accent-orange transition-colors"
+          >
+            REPORT A SERVICE
+          </a>
           <span className="text-gray-600">|</span>
-          <a href="#" className="hover:text-accent-orange transition-colors">PRIVACY NOTICE</a>
+          <a href="#" className="hover:text-accent-orange transition-colors">
+            PRIVACY NOTICE
+          </a>
         </div>
 
         {/* Contact Info – left‑aligned everywhere */}
@@ -36,7 +62,7 @@ export default function Footer() {
           <p>
             <span className="font-medium text-white">Phone Number</span>{' '}
             <a
-              href="https://wa.me/256750349712"
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-300 hover:text-accent-orange transition-colors"
